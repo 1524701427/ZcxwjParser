@@ -1,3 +1,5 @@
+"""Java FileContent 业务结果映射。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -10,7 +12,7 @@ logger = get_logger("mappers")
 
 
 def _raw_value(details: dict[str, Any], field_name: str) -> Any:
-    """Return the original extracted field value, preserving Java String semantics."""
+    """读取字段原始值并保持 Java String 语义。\n\n    Args:\n        details: 详细抽取结果。\n        field_name: 内部字段名。\n\n    Returns:\n        原始字符串值；字段不存在时返回 None。\n    """
     item = (details.get("fields") or {}).get(field_name)
     if not isinstance(item, dict):
         return None
@@ -24,7 +26,7 @@ def _raw_value(details: dict[str, Any], field_name: str) -> Any:
 
 
 def _local_datetime_value(details: dict[str, Any], field_name: str) -> str | None:
-    """Convert an extracted date to the ISO LocalDateTime form expected by Java."""
+    """将日期转换为 Java LocalDateTime 可反序列化格式。\n\n    Args:\n        details: 详细抽取结果。\n        field_name: 日期字段名。\n\n    Returns:\n        ISO LocalDateTime 字符串；无法转换时返回 None。\n    """
     item = (details.get("fields") or {}).get(field_name)
     if not isinstance(item, dict):
         return None
@@ -39,11 +41,11 @@ def _local_datetime_value(details: dict[str, Any], field_name: str) -> str | Non
     if not date_text:
         return None
 
-    # Normalizer emits YYYY-MM-DD. Java LocalDateTime needs a time component.
+    # 标准化日期通常为 YYYY-MM-DD，Java LocalDateTime 需要补充时间部分。
     if len(date_text) == 10 and date_text[4:5] == "-" and date_text[7:8] == "-":
         return f"{date_text}T00:00:00"
 
-    # Already ISO-like LocalDateTime: keep it unchanged.
+    # 已经是 ISO LocalDateTime 格式时直接保留。
     if "T" in date_text:
         return date_text
 
@@ -51,7 +53,7 @@ def _local_datetime_value(details: dict[str, Any], field_name: str) -> str | Non
 
 
 def to_file_content(details: dict[str, Any]) -> dict[str, Any]:
-    """Map internal extraction details to the Java FileContent JSON contract."""
+    """将内部抽取结果映射为 Java FileContent 字段。\n\n    Args:\n        details: ExtractionResult.to_dict() 生成的详细结果。\n\n    Returns:\n        与 Java FileContent 字段名一致的扁平字典。\n    """
     doc_type = str(details.get("doc_type") or "unknown_support_doc")
     land_control = _raw_value(details, "land_control") or _raw_value(details, "land_control_area")
 
