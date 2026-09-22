@@ -44,10 +44,10 @@ import sys
 
 sys.path.insert(0, r"support_doc_extractor/src")
 
-from support_doc_extractor import extract_document
+from support_doc_extractor import SupportDocType, extract_document
 
 output = extract_document(
-    "环评批复",
+    SupportDocType.ENVIRONMENT_APPROVAL,
     r"支持性文件/示例.pdf",
 )
 
@@ -225,3 +225,28 @@ configure_logging("DEBUG")
 2026-09-22 16:30:01,457 | INFO | support_doc_extractor.mappers | java_mapping_done doc_type=grid_access populated_fields=10 total_fields=21
 2026-09-22 16:30:01,460 | INFO | support_doc_extractor.engine | task_done file=/data/demo.pdf doc_type=grid_access result=/data/demo.json details=/data/demo_details.json elapsed_ms=1337
 ```
+
+
+## 文件类型枚举
+
+单文件解析入口推荐使用 `SupportDocType`：
+
+```python
+from support_doc_extractor import SupportDocType, extract_document
+
+extract_document(SupportDocType.ENVIRONMENT_APPROVAL, "/data/环评.pdf")
+extract_document(SupportDocType.SOIL_WATER_APPROVAL, "/data/水保.pdf")
+extract_document(SupportDocType.LAND_PREAPPROVAL, "/data/用地预审.pdf")
+extract_document(SupportDocType.LOAN_INTENT, "/data/贷款意向.pdf")
+extract_document(SupportDocType.GRID_ACCESS, "/data/接入批复.pdf")
+```
+
+枚举值：
+
+- `LOAN_INTENT`：贷款意向
+- `LAND_PREAPPROVAL`：用地预审
+- `SOIL_WATER_APPROVAL`：水保
+- `ENVIRONMENT_APPROVAL`：环评
+- `GRID_ACCESS`：接入
+
+入口只接受一个文件路径，传目录会直接报错。为了兼容现有调用，仍可传 `"环评"`、`"水保批复"`、`"grid_access"` 等字符串，但新代码建议统一使用枚举。
