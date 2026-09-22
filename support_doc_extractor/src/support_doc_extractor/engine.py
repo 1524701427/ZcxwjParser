@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import inspect
 import json
 import re
 import tempfile
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
@@ -22,308 +20,7 @@ from support_doc_extractor.models import (
 
 
 
-# ==== 解析器基础 ====
-
-class Parser(ABC):
-    """Base interface for document parsers."""
-
-    name: str
-
-    @abstractmethod
-    def parse(self, path: Path) -> Document:
-        """Parse a file into the unified document model."""
-        raise NotImplementedError
-
-
-# ==== PyMuPDF 解析 ====
-
-def clean_text(text: str) -> str:
-    """Collapse PDF text whitespace into a single readable line."""
-    return re.sub(r"\s+", " ", text or "").strip()
-
-
-class PyMuPDFParser(Parser):
-    """Lightweight fallback parser backed by PyMuPDF text extraction."""
-
-    name = "pymupdf"
-
-    def parse(self, path: Path) -> Document:
-        """Parse a PDF with PyMuPDF.
-
-        Args:
-            path: PDF file path.
-
-        Returns:
-            Unified document containing page-level text blocks.
-        """
-        try:
-            import fitz
-        except ImportError as exc:
-            raise RuntimeError("PyMuPDF is required for fallback parsing. Install pymupdf.") from exc
-
-        pages: list[Page] = []
-        with fitz.open(path) as doc:
-            for page_index, page in enumerate(doc, 1):
-                text = clean_text(page.get_text("text") or "")
-                blocks = [Block(text=text, type="page_text", page_no=page_index)] if text else []
-                pages.append(
-                    Page(
-                        page_no=page_index,
-                        width=float(page.rect.width),
-                        height=float(page.rect.height),
-                        blocks=blocks,
-                        text=text,
-                    )
-                )
-        document = Document(file=path, pages=pages, parser=self.name)
-        document.rebuild_text()
-        return document
-
-
-# ==== OpenDataLoader 解析 ====
-
-class OpenDataLoaderParser(Parser):
-    """Adapter for opendataloader_pdf outputs.
-
-    The parser has two responsibilities:
-    1. Run opendataloader_pdf when needed.
-    2. Convert the produced JSON into the project-level Document object.
-
-    The exact opendataloader options vary by environment, so this class keeps
-    execution small and explicit. Existing main.py integration can later be
-    reused here without changing business extractors.
-    """
-
-    name = "opendataloader_pdf"
-
-    def __init__(self, output_root: Path | None = None, options: dict[str, Any] | None = None) -> None:
-        """Initialize parser output cache and opendataloader options."""
-        self.output_root = output_root
-        self.options = options or {}
-
-    def parse(self, path: Path) -> Document:
-        """Resolve or create opendataloader JSON and adapt it to Document."""
-        json_path = self._resolve_or_run(path)
-        data = json.loads(json_path.read_text(encoding="utf-8"))
-        return document_from_opendataloader_json(path, data, parser=self.name, source_root=json_path.parent)
-
-    def _resolve_or_run(self, path: Path) -> Path:
-        """Find existing JSON or run opendataloader for the input file."""
-        if self.output_root is None:
-            raise RuntimeError("OpenDataLoaderParser requires output_root or a pre-produced JSON adapter call.")
-        if self.options.get("refresh"):
-            self._cleanup_existing_output(path)
-        else:
-            existing = self._find_output_json(path)
-            if existing is not None:
-                return existing
-        try:
-            import opendataloader_pdf
-        except ImportError as exc:
-            raise RuntimeError("opendataloader_pdf is not installed.") from exc
-        self.output_root.mkdir(parents=True, exist_ok=True)
-        options = self._build_convert_options(path, opendataloader_pdf.convert)
-        opendataloader_pdf.convert(**options)
-        produced = self._find_output_json(path)
-        if produced is None:
-            raise FileNotFoundError(f"opendataloader output JSON not found for {path}")
-        return produced
-
-    def _cleanup_existing_output(self, path: Path) -> None:
-        """Remove cached parse output for one document before refreshing."""
-        if self.output_root is None:
-            return
-        targets = [
-            self.output_root / path.stem / f"{path.stem}.json",
-            self.output_root / f"{path.stem}.json",
-            self.output_root / f"{path.stem}_images",
-            self.output_root / path.stem,
-        ]
-        for target in targets:
-            try:
-                resolved_root = self.output_root.resolve()
-                resolved_target = target.resolve()
-                if resolved_root not in (resolved_target, *resolved_target.parents):
-                    continue
-                if target.is_file():
-                    target.unlink()
-                elif target.is_dir() and target.name in {path.stem, f"{path.stem}_images"}:
-                    import shutil
-
-                    shutil.rmtree(target)
-            except OSError:
-                continue
-
-    def _build_convert_options(self, path: Path, convert_func: Any) -> dict[str, Any]:
-        """Build only options supported by the installed converter version."""
-        raw = dict(self.options)
-        options: dict[str, Any] = {
-            "input_path": str(path),
-            "output_dir": str(self.output_root),
-            "format": raw.pop("format", "json"),
-            "reading_order": raw.pop("reading_order", "xycut"),
-            "quiet": raw.pop("quiet", True),
-        }
-        if raw.get("hybrid_backend"):
-            options.update(
-                {
-                    "hybrid": raw.get("hybrid_backend"),
-                    "hybrid_mode": raw.get("hybrid_mode", "full"),
-                    "hybrid_url": raw.get("hybrid_url"),
-                    "hybrid_timeout": raw.get("hybrid_timeout", "0"),
-                    "hybrid_fallback": raw.get("hybrid_fallback", True),
-                }
-            )
-        else:
-            for key in ("hybrid_backend", "hybrid_mode", "hybrid_url", "hybrid_timeout", "hybrid_fallback", "hybrid_batch_size"):
-                raw.pop(key, None)
-        options.update(raw)
-        supported = set(inspect.signature(convert_func).parameters)
-        return {key: value for key, value in options.items() if key in supported and value is not None}
-
-    def _find_output_json(self, path: Path) -> Path | None:
-        """Locate the JSON file emitted for an input document."""
-        candidates = [
-            self.output_root / path.stem / f"{path.stem}.json",
-            self.output_root / f"{path.stem}.json",
-        ]
-        candidates.extend(sorted((self.output_root / path.stem).glob("*.json")) if (self.output_root / path.stem).exists() else [])
-        candidates.extend(sorted(self.output_root.glob(f"**/{path.stem}.json")))
-        for candidate in candidates:
-            if candidate.exists():
-                return candidate
-        return None
-
-
-def document_from_opendataloader_json(
-    file_path: Path,
-    data: dict[str, Any],
-    parser: str = "opendataloader_pdf",
-    source_root: Path | None = None,
-) -> Document:
-    """Convert an opendataloader JSON tree into the unified document model.
-
-    Args:
-        file_path: Original source document.
-        data: Parsed opendataloader JSON.
-        parser: Parser name to store on the document.
-        source_root: Directory used to resolve emitted image files.
-
-    Returns:
-        Unified document with pages, blocks, and tables.
-    """
-    pages: dict[int, Page] = {}
-
-    def get_page(page_no: int) -> Page:
-        if page_no not in pages:
-            pages[page_no] = Page(page_no=page_no)
-        return pages[page_no]
-
-    for element in walk_elements(data):
-        text = extract_text(element)
-        block_type = str(element.get("type") or element.get("category") or "paragraph")
-        if not text and "image" not in block_type.lower():
-            continue
-        page_no = int(element.get("page_number") or element.get("page number") or element.get("page") or 1)
-        bbox = parse_bbox(element.get("bounding box") or element.get("bbox"))
-        page = get_page(page_no)
-        if bbox:
-            page.width = max(page.width or 0, bbox[2])
-            page.height = max(page.height or 0, bbox[3])
-        page.blocks.append(
-            Block(
-                text=text,
-                type=block_type,
-                page_no=page_no,
-                bbox=bbox,
-                meta={"raw_type": block_type, "source": element.get("source"), "source_root": str(source_root) if source_root else None},
-            )
-        )
-
-    for table_node in walk_tables(data):
-        page_no = int(table_node.get("page_number") or table_node.get("page number") or table_node.get("page") or 1)
-        rows = table_to_rows(table_node)
-        if rows:
-            get_page(page_no).tables.append(Table(rows=rows, page_no=page_no, bbox=parse_bbox(table_node.get("bounding box") or table_node.get("bbox"))))
-
-    ordered_pages = [pages[key] for key in sorted(pages)] or [Page(page_no=1)]
-    for page in ordered_pages:
-        page.text = "\n".join(block.text for block in page.blocks if block.text)
-    document = Document(file=file_path, pages=ordered_pages, parser=parser)
-    document.rebuild_text()
-    return document
-
-
-def walk_elements(node: Any):
-    """Yield text/image-like nodes from a nested opendataloader tree."""
-    if isinstance(node, dict):
-        node_type = str(node.get("type") or node.get("category") or "").lower()
-        if any(key in node for key in ("text", "content")) or "image" in node_type:
-            yield node
-        for value in node.values():
-            yield from walk_elements(value)
-    elif isinstance(node, list):
-        for item in node:
-            yield from walk_elements(item)
-
-
-def walk_tables(node: Any):
-    """Yield table-like nodes from a nested opendataloader tree."""
-    if isinstance(node, dict):
-        node_type = str(node.get("type") or node.get("category") or "").lower()
-        if "table" in node_type or "cells" in node or "rows" in node:
-            yield node
-        for value in node.values():
-            yield from walk_tables(value)
-    elif isinstance(node, list):
-        for item in node:
-            yield from walk_tables(item)
-
-
-def extract_text(node: dict[str, Any]) -> str:
-    """Extract text from common opendataloader node fields."""
-    value = node.get("text") or node.get("content") or node.get("value") or ""
-    return str(value).strip()
-
-
-def parse_bbox(value: Any):
-    """Parse a four-value bounding box tuple when available."""
-    if isinstance(value, (list, tuple)) and len(value) >= 4:
-        try:
-            return (float(value[0]), float(value[1]), float(value[2]), float(value[3]))
-        except (TypeError, ValueError):
-            return None
-    return None
-
-
-def table_to_rows(table_node: dict[str, Any]) -> list[list[str]]:
-    """Convert table rows or indexed cells into a rectangular row list."""
-    rows = table_node.get("rows")
-    if isinstance(rows, list):
-        return [[cell_text(cell) for cell in row] for row in rows if isinstance(row, list)]
-    cells = table_node.get("cells")
-    if not isinstance(cells, list):
-        return []
-    indexed: dict[int, dict[int, str]] = {}
-    for cell in cells:
-        if not isinstance(cell, dict):
-            continue
-        row = int(cell.get("row") or cell.get("row_index") or 0)
-        col = int(cell.get("col") or cell.get("col_index") or 0)
-        indexed.setdefault(row, {})[col] = cell_text(cell)
-    result: list[list[str]] = []
-    for row in sorted(indexed):
-        cols = indexed[row]
-        result.append([cols.get(col, "") for col in range(max(cols) + 1)])
-    return result
-
-
-def cell_text(cell: Any) -> str:
-    """Extract display text from one table cell."""
-    if isinstance(cell, dict):
-        return str(cell.get("text") or cell.get("content") or cell.get("value") or "").strip()
-    return str(cell or "").strip()
-
+from support_doc_extractor.parsers import OpenDataLoaderParser, PyMuPDFParser
 
 # ==== 文档类型处理 ====
 
@@ -1258,7 +955,12 @@ def append_image_block_ocr(
     if not image_blocks:
         return document
 
-    engine = _rapidocr_engine()
+    try:
+        engine = _rapidocr_engine()
+    except Exception as exc:
+        document.meta["image_block_ocr_error"] = f"{type(exc).__name__}: {exc}"
+        return document
+
     ocr_count = 0
     errors: list[dict[str, Any]] = []
 
@@ -1433,157 +1135,7 @@ def _remove_red_stamp(image_path: Path) -> Path | None:
     return tmp_path
 
 
-# ==== 字段标准化 ====
-
-def normalize_field(field: ExtractedField) -> ExtractedField:
-    """Attach normalized value metadata for supported field types."""
-    text = str(field.value or "").strip()
-    if not text:
-        return field
-    if field.name.endswith("investment") or "fee" in field.name or field.name == "total_investment":
-        field.normalized = normalize_money(text)
-    elif field.name in {"main_transformer_capacity"}:
-        field.normalized = normalize_apparent_power(text)
-    elif field.name in {"svg_capacity"}:
-        field.normalized = normalize_reactive_power(text)
-    elif field.name in {"line_length", "access_distance"}:
-        field.normalized = normalize_length(text)
-    elif field.name in {"outgoing_circuits"}:
-        field.normalized = normalize_count(text, "\u56de")
-    elif field.name in {"capacity"}:
-        field.normalized = normalize_capacity(text)
-    elif field.name in {"land_area", "land_control_area"}:
-        field.normalized = normalize_area(text)
-    elif field.name in {"issue_date"}:
-        field.normalized = normalize_date(text)
-    elif field.name in {"document_no"}:
-        field.value = normalize_document_no(text)
-    elif field.name in {"loan_interest_rate"}:
-        field.normalized = normalize_percent(text)
-    return field
-
-
-def normalize_money(text: str) -> dict[str, Any] | None:
-    """Normalize money expressions to ten-thousand yuan."""
-    match = re.search(r"([0-9,.]+)\s*(\u4e07\u5143|\u4ebf\u5143|\u5143)", text)
-    if not match:
-        return None
-    amount = float(match.group(1).replace(",", ""))
-    unit = match.group(2)
-    if unit == "\u4ebf\u5143":
-        return {"amount": amount * 10000, "unit": "\u4e07\u5143"}
-    if unit == "\u5143":
-        return {"amount": amount / 10000, "unit": "\u4e07\u5143"}
-    return {"amount": amount, "unit": "\u4e07\u5143"}
-
-
-def normalize_capacity(text: str) -> dict[str, Any] | None:
-    """Normalize installed capacity to MW."""
-    match = re.search(r"([0-9,.]+)\s*(MW|\u5146\u74e6|\u4e07\u5343\u74e6|kW)", text, re.IGNORECASE)
-    if not match:
-        return None
-    value = float(match.group(1).replace(",", ""))
-    unit = match.group(2).lower()
-    if unit == "\u4e07\u5343\u74e6":
-        return {"value": value * 10, "unit": "MW"}
-    if unit == "kw":
-        return {"value": value / 1000, "unit": "MW"}
-    return {"value": value, "unit": "MW"}
-
-
-def normalize_area(text: str) -> dict[str, Any] | None:
-    """Normalize land area to hectares."""
-    match = re.search(r"([0-9,.]+)\s*(\u516c\u9877|\u4ea9|\u5e73\u65b9\u7c73|m2|\u33a1)", text)
-    if not match:
-        return None
-    value = float(match.group(1).replace(",", ""))
-    unit = match.group(2)
-    if unit == "\u4ea9":
-        return {"value": value / 15, "unit": "\u516c\u9877"}
-    if unit in {"\u5e73\u65b9\u7c73", "m2", "\u33a1"}:
-        return {"value": value / 10000, "unit": "\u516c\u9877"}
-    return {"value": value, "unit": "\u516c\u9877"}
-
-
-def normalize_date(text: str) -> str | None:
-    """Normalize Chinese or slash-separated dates to ISO format."""
-    match = re.search(r"((?:19|20)\d{2})\s*\u5e74\s*(\d{1,2})\s*\u6708\s*(\d{1,2})\s*\u65e5", text)
-    if match:
-        return f"{int(match.group(1)):04d}-{int(match.group(2)):02d}-{int(match.group(3)):02d}"
-    match = re.search(r"((?:19|20)\d{2})[./-](\d{1,2})[./-](\d{1,2})", text)
-    if match:
-        return f"{int(match.group(1)):04d}-{int(match.group(2)):02d}-{int(match.group(3)):02d}"
-    return None
-
-
-def normalize_document_no(text: str) -> str:
-    """Normalize bracket variants in official document numbers."""
-    return (
-        text.replace("\uff3b", "\u3014")
-        .replace("[", "\u3014")
-        .replace("\uff3d", "\u3015")
-        .replace("]", "\u3015")
-    )
-
-
-def normalize_percent(text: str) -> dict[str, Any] | None:
-    """Normalize percentage values."""
-    match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*%", text)
-    if not match:
-        return None
-    return {"value": float(match.group(1)), "unit": "%"}
-
-
-def normalize_length(text: str) -> dict[str, Any] | None:
-    """Normalize line distance to kilometers."""
-    match = re.search(r"([0-9,.]+)(?:\s*[xX\u00d7]\s*([0-9,.]+))?\s*(km|\u516c\u91cc|\u5343\u7c73)", text, re.IGNORECASE)
-    if not match:
-        return None
-    first = float(match.group(1).replace(",", ""))
-    second = float(match.group(2).replace(",", "")) if match.group(2) else None
-    value = first * second if second is not None else first
-    return {"value": value, "unit": "km"}
-
-
-def normalize_apparent_power(text: str) -> dict[str, Any] | None:
-    """Normalize transformer apparent power to MVA."""
-    match = re.search(r"([0-9,.]+)(?:\s*[xX\u00d7]\s*([0-9,.]+))?\s*(MVA|\u5146\u4f0f\u5b89)", text, re.IGNORECASE)
-    if not match:
-        return None
-    first = float(match.group(1).replace(",", ""))
-    second = float(match.group(2).replace(",", "")) if match.group(2) else None
-    value = first * second if second is not None else first
-    return {"value": value, "unit": "MVA"}
-
-
-def normalize_reactive_power(text: str) -> dict[str, Any] | None:
-    """Normalize reactive power to Mvar."""
-    match = re.search(r"([0-9,.]+)\s*(Mvar|\u5146\u4e4f)", text, re.IGNORECASE)
-    if not match:
-        return None
-    return {"value": float(match.group(1).replace(",", "")), "unit": "Mvar"}
-
-
-def normalize_count(text: str, unit: str) -> dict[str, Any] | None:
-    """Normalize integer counts while preserving the business unit."""
-    match = re.search(r"([0-9]+)", text)
-    if not match:
-        return None
-    return {"value": int(match.group(1)), "unit": unit}
-
-
-# ==== 字段校验 ====
-
-def validate_field(field: ExtractedField, document: Document) -> tuple[bool, str | None]:
-    """Validate a candidate and return a warning when evidence is approximate."""
-    if field.value is None or str(field.value).strip() == "":
-        return False, "empty_value"
-    text = document.full_text or document.rebuild_text()
-    evidence = field.evidence or str(field.value)
-    if evidence and evidence not in text and len(str(field.value)) > 4:
-        return True, "value_not_exact_span"
-    return True, None
-
+from support_doc_extractor.normalizers import normalize_field, validate_field
 
 # ==== 候选合并 ====
 
@@ -1603,6 +1155,8 @@ class ResultMerger:
     ) -> ExtractionResult:
         """Merge extractor candidates into one JSON-ready result."""
         result = ExtractionResult(file=document.file, doc_type=document.doc_type, tables=tables or [], meta=dict(document.meta))
+        if document.meta.get("ocr_incomplete"):
+            result.warnings.append(f"ocr_incomplete:fallback_pages={document.meta.get('fallback_pages') or []}")
         for candidate in candidates:
             candidate = normalize_field(candidate)
             valid, warning = validate_field(candidate, document)
@@ -1705,7 +1259,7 @@ class SupportDocPipeline:
             document.meta["ocr_reason"] = ocr_reason(document, min_text_chars=self.min_text_chars)
             if self.parser_name == "opendataloader_pdf" and self.hybrid_backend:
                 try:
-                    hybrid_document = self._parse_with_hybrid_batches(path)
+                    hybrid_document = self._parse_with_hybrid_batches(path, fallback_document=document)
                     hybrid_document.meta.update(document.meta)
                     hybrid_document.meta["hybrid_used"] = True
                     if not needs_ocr(hybrid_document, min_text_chars=self.min_text_chars):
@@ -1726,7 +1280,7 @@ class SupportDocPipeline:
                 "hybrid_backend": self.hybrid_backend,
                 "hybrid_url": self.hybrid_url,
                 "hybrid_mode": self.hybrid_mode,
-                "hybrid_timeout": "0",
+                "hybrid_timeout": "120",
                 "hybrid_fallback": True,
                 "refresh": self.refresh_parsed,
             }
@@ -1734,17 +1288,34 @@ class SupportDocPipeline:
         hybrid_root = self.parsed_root / "_hybrid"
         return OpenDataLoaderParser(output_root=hybrid_root, options=options).parse(path)
 
-    def _parse_with_hybrid_batches(self, path: Path) -> Document:
+    def _parse_with_hybrid_batches(
+        self,
+        path: Path,
+        fallback_document: Document | None = None,
+    ) -> Document:
+        """OCR each page and preserve the original parse for failed pages."""
         page_count = pdf_page_count(path)
-        pages = []
-        page_errors = []
+        fallback_pages = {int(page.page_no): page for page in (fallback_document.pages if fallback_document else []) if page.page_no is not None}
+        pages: list[Page] = []
+        page_errors: list[dict[str, Any]] = []
+        fallback_page_numbers: list[int] = []
+
         for page_no in range(1, page_count + 1):
             try:
                 page_document = self._parse_with_hybrid_page(path, page_no)
             except Exception as exc:
                 page_errors.append({"page": page_no, "error": f"{type(exc).__name__}: {exc}"})
+                fallback_page = fallback_pages.get(page_no)
+                if fallback_page is not None:
+                    pages.append(fallback_page)
+                    fallback_page_numbers.append(page_no)
                 continue
             if not page_document.pages:
+                page_errors.append({"page": page_no, "error": "empty_hybrid_result"})
+                fallback_page = fallback_pages.get(page_no)
+                if fallback_page is not None:
+                    pages.append(fallback_page)
+                    fallback_page_numbers.append(page_no)
                 continue
             page = page_document.pages[0]
             page.page_no = page_no
@@ -1753,15 +1324,21 @@ class SupportDocPipeline:
             for table in page.tables:
                 table.page_no = page_no
             pages.append(page)
+
         if not pages:
             if page_errors:
                 raise RuntimeError(f"All hybrid OCR pages failed: {page_errors[:3]}")
             return self._parse_with_hybrid(path)
+
+        pages.sort(key=lambda page: int(page.page_no or 0))
         document = Document(file=path, pages=pages, parser="opendataloader_pdf")
         document.meta["hybrid_batched"] = True
         document.meta["hybrid_batch_size"] = self.hybrid_batch_size
         if page_errors:
             document.meta["page_errors"] = page_errors
+        if fallback_page_numbers:
+            document.meta["ocr_incomplete"] = True
+            document.meta["fallback_pages"] = sorted(set(fallback_page_numbers))
         document.rebuild_text()
         return document
 
@@ -1779,7 +1356,7 @@ class SupportDocPipeline:
                 "hybrid_backend": self.hybrid_backend,
                 "hybrid_url": self.hybrid_url,
                 "hybrid_mode": self.hybrid_mode,
-                "hybrid_timeout": "0",
+                "hybrid_timeout": "120",
                 "hybrid_fallback": True,
                 "refresh": self.refresh_parsed,
             }
