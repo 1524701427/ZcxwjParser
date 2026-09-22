@@ -1,3 +1,5 @@
+"""项目统一日志配置。"""
+
 from __future__ import annotations
 
 import logging
@@ -17,7 +19,7 @@ def configure_logging(
     stream: TextIO | None = None,
     force: bool = False,
 ) -> logging.Logger:
-    """Configure console logging for the extractor package."""
+    """配置控制台日志。\n\n    Args:\n        level: 日志级别；未传时读取 SUPPORT_DOC_LOG_LEVEL，默认 INFO。\n        stream: 日志输出流，默认标准输出。\n        force: 是否强制重新创建日志处理器。\n\n    Returns:\n        项目根日志器。\n    """
     global _CONFIGURED
 
     logger = logging.getLogger(LOGGER_NAME)
@@ -50,7 +52,7 @@ def configure_logging(
 
 
 def get_logger(name: str | None = None) -> logging.Logger:
-    """Return a package logger and configure console output on first use."""
+    """获取项目命名空间下的日志器。\n\n    Args:\n        name: 子模块名称，例如 engine 或 parsers。\n\n    Returns:\n        已配置的日志器。\n    """
     configure_logging()
     if not name:
         return logging.getLogger(LOGGER_NAME)
