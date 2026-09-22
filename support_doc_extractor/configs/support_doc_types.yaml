@@ -39,6 +39,7 @@ document_types:
       - access_investment
       - access_plan
       - access_station
+      - access_location
       - outgoing_circuits
       - access_distance
       - conductor_section
@@ -62,6 +63,7 @@ document_types:
       - construction_unit
       - project_basis
       - project_location
+      - land_control
       - land_control_area
       - construction_scale
       - attachments
