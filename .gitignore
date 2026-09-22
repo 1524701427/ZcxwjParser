@@ -7,7 +7,7 @@ __pycache__/
 *.log
 
 output/
-support_doc_extractor/runtime/
+runtime/
 *_images/
 _hybrid_batches/
 _hybrid_stamp_pages/
