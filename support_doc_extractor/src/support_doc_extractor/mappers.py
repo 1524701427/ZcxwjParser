@@ -3,6 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from support_doc_extractor.logging_utils import get_logger
+
+logger = get_logger("mappers")
+
 
 FILE_TYPE_NAMES = {
     "loan_intent": "贷款意向文件",
@@ -60,7 +64,7 @@ def to_file_content(details: dict[str, Any]) -> dict[str, Any]:
     doc_type = str(details.get("doc_type") or "unknown_support_doc")
     land_control = _raw_value(details, "land_control") or _raw_value(details, "land_control_area")
 
-    return {
+    result = {
         "fileType": FILE_TYPE_NAMES.get(doc_type, doc_type),
         "approvalUnit": _raw_value(details, "approval_agency"),
         "dispatchNo": _raw_value(details, "document_no"),
@@ -83,3 +87,12 @@ def to_file_content(details: dict[str, Any]) -> dict[str, Any]:
         "recognizeDate": datetime.now().replace(microsecond=0).isoformat(),
         "remark": None,
     }
+    mapped_count = sum(1 for key, value in result.items() if value is not None and key not in {"recognizeDate"})
+    logger.info(
+        "java_mapping_done doc_type=%s populated_fields=%d total_fields=%d",
+        doc_type,
+        mapped_count,
+        len(result),
+    )
+    logger.debug("java_mapping_fields populated=%s", sorted(key for key, value in result.items() if value is not None))
+    return result
