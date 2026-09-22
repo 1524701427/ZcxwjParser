@@ -42,6 +42,8 @@ def test_java_file_content_mapping_uses_raw_business_strings():
     assert result["mainTransformerCapacity"] == "50MVA"
     assert result["remark"] is None
     assert result["recognizeDate"]
+    assert "+" not in result["recognizeDate"]
+    assert result["recognizeDate"].count(":") == 2
 
 
 def test_land_control_prefers_text_semantics_over_area_fallback():
