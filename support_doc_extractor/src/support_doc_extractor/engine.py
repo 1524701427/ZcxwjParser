@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import tempfile
 import time
@@ -20,10 +19,8 @@ from support_doc_extractor.models import (
 )
 
 
-
 from support_doc_extractor.parsers import OpenDataLoaderParser, PyMuPDFParser
 from support_doc_extractor.logging_utils import get_logger
-from support_doc_extractor.document_types import SupportDocType, normalize_doc_type
 
 logger = get_logger("engine")
 
@@ -951,7 +948,6 @@ def chinese_digit_to_int(text: str) -> str:
 # ==== 图片块识别 ====
 
 
-
 def append_image_block_ocr(
     document: Document,
     parsed_root: Path,
@@ -1158,7 +1154,6 @@ def _remove_red_stamp(image_path: Path) -> Path | None:
 
 
 from support_doc_extractor.normalizers import normalize_field, validate_field
-from support_doc_extractor.mappers import to_file_content
 
 # ==== 候选合并 ====
 
@@ -1194,7 +1189,6 @@ class ResultMerger:
 
 
 # ==== 抽取流程 ====
-
 
 
 class SupportDocPipeline:
@@ -1509,72 +1503,6 @@ class SupportDocPipeline:
             if tags & configured:
                 selected.append(field)
         return selected
-
-
-def output_paths_for(file_path: str | Path) -> tuple[Path, Path]:
-    """????????????????"""
-    path = Path(file_path).resolve()
-    result_path = path.with_suffix(".json")
-    details_path = path.with_name(f"{path.stem}_details.json")
-    return result_path, details_path
-
-
-def simple_result(details: dict[str, Any]) -> dict[str, Any]:
-    """Map internal extraction details to the Java FileContent JSON contract."""
-    return to_file_content(details)
-
-
-def write_json(path: Path, payload: Any) -> None:
-    """Write one JSON file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def default_parser_name() -> str:
-    """Return the best available parser without requiring caller input."""
-    try:
-        import opendataloader_pdf  # noqa: F401
-    except ImportError:
-        return "pymupdf"
-    return "opendataloader_pdf"
-
-
-def extract_document(doc_type: SupportDocType | str, file_path: str | Path) -> dict[str, Any]:
-    """Single public API: pass document type and file path, then write JSON files."""
-    started_at = time.perf_counter()
-    normalized_type = normalize_doc_type(doc_type)
-    path = Path(file_path).resolve()
-    logger.info("task_start file=%s requested_type=%s normalized_type=%s", path, doc_type, normalized_type)
-    if not path.exists():
-        logger.error("task_failed file=%s reason=file_not_found", path)
-        raise FileNotFoundError(f"文件不存在: {path}")
-    if not path.is_file():
-        logger.error("task_failed file=%s reason=not_single_file", path)
-        raise ValueError(f"必须传入单个文件，不能传目录: {path}")
-    try:
-        pipeline = SupportDocPipeline(parser_name=default_parser_name())
-        details = pipeline.infer_with_type(path, normalized_type).to_dict()
-        result = simple_result(details)
-        result_path, details_path = output_paths_for(path)
-        write_json(result_path, result)
-        write_json(details_path, details)
-    except Exception:
-        logger.exception("task_failed file=%s doc_type=%s", path, normalized_type)
-        raise
-    logger.info(
-        "task_done file=%s doc_type=%s result=%s details=%s elapsed_ms=%d",
-        path,
-        normalized_type,
-        result_path,
-        details_path,
-        int((time.perf_counter() - started_at) * 1000),
-    )
-    return {
-        "result_path": str(result_path),
-        "details_path": str(details_path),
-        "result": result,
-        "details": details,
-    }
 
 
 def needs_ocr(document: Document, min_text_chars: int = 120) -> bool:
