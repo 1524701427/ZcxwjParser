@@ -1,3 +1,5 @@
+"""PDF 解析器、OpenDataLoader 适配及表格结构转换。"""
+
 from __future__ import annotations
 
 import hashlib
@@ -16,41 +18,41 @@ logger = get_logger("parsers")
 # ==== 解析器基础 ====
 
 class Parser(ABC):
-    """Base interface for document parsers."""
+    """文档解析器抽象基类。"""
 
     name: str
 
     @abstractmethod
     def parse(self, path: Path) -> Document:
-        """Parse a file into the unified document model."""
+        """将文件解析为统一文档模型。\n\n        Args:\n            path: 待解析文件路径。\n\n        Returns:\n            统一文档模型。\n        """
         raise NotImplementedError
 
 
 # ==== PyMuPDF 解析 ====
 
 def clean_text(text: str) -> str:
-    """Collapse PDF text whitespace into a single readable line."""
+    """合并 PDF 文本中的连续空白。\n\n    Args:\n        text: 原始文本。\n\n    Returns:\n        清洗后的单行文本。\n    """
     return re.sub(r"\s+", " ", text or "").strip()
 
 
 class PyMuPDFParser(Parser):
-    """Lightweight fallback parser backed by PyMuPDF text extraction."""
+    """基于 PyMuPDF 的轻量级文本解析降级方案。"""
 
     name = "pymupdf"
 
     def parse(self, path: Path) -> Document:
-        """Parse a PDF with PyMuPDF.
+        """使用 PyMuPDF 解析 PDF。
 
         Args:
-            path: PDF file path.
+            path: PDF 文件路径。
 
         Returns:
-            Unified document containing page-level text blocks.
+            包含逐页文本块的统一文档模型。
         """
         try:
             import fitz
         except ImportError as exc:
-            raise RuntimeError("PyMuPDF is required for fallback parsing. Install pymupdf.") from exc
+            raise RuntimeError("PyMuPDF 降级解析需要安装 pymupdf。") from exc
 
         logger.debug("pymupdf_parse_start file=%s", path)
         pages: list[Page] = []
@@ -81,7 +83,7 @@ class PyMuPDFParser(Parser):
 # ==== OpenDataLoader 解析 ====
 
 class OpenDataLoaderParser(Parser):
-    """Adapter for OpenDataLoader outputs with per-source isolated caches."""
+    """OpenDataLoader 解析适配器，并为每个源文件隔离缓存。"""
 
     name = "opendataloader_pdf"
 
@@ -187,16 +189,16 @@ def document_from_opendataloader_json(
     parser: str = "opendataloader_pdf",
     source_root: Path | None = None,
 ) -> Document:
-    """Convert an opendataloader JSON tree into the unified document model.
+    """将 OpenDataLoader JSON 树转换为统一文档模型。
 
     Args:
-        file_path: Original source document.
-        data: Parsed opendataloader JSON.
-        parser: Parser name to store on the document.
-        source_root: Directory used to resolve emitted image files.
+        file_path: 原始文档路径。
+        data: OpenDataLoader 解析 JSON。
+        parser: 写入文档元数据的解析器名称。
+        source_root: 用于解析图片相对路径的输出目录。
 
     Returns:
-        Unified document with pages, blocks, and tables.
+        包含页面、块和表格的统一文档模型。
     """
     pages: dict[int, Page] = {}
 
@@ -241,7 +243,7 @@ def document_from_opendataloader_json(
 
 
 def walk_elements(node: Any):
-    """Yield text/image-like nodes from a nested opendataloader tree."""
+    """递归遍历 OpenDataLoader 树中的文本和图片节点。\n\n    Args:\n        node: 当前 JSON 节点。\n\n    Yields:\n        文本或图片节点。\n    """
     if isinstance(node, dict):
         node_type = str(node.get("type") or node.get("category") or "").lower()
         if any(key in node for key in ("text", "content")) or "image" in node_type:
@@ -254,7 +256,7 @@ def walk_elements(node: Any):
 
 
 def walk_tables(node: Any):
-    """Yield only real table nodes, not row/cell containers."""
+    """递归遍历真实表格节点，跳过行和单元格容器。\n\n    Args:\n        node: 当前 JSON 节点。\n\n    Yields:\n        表格节点。\n    """
     if isinstance(node, dict):
         node_type = str(node.get("type") or node.get("category") or "").strip().lower()
         if node_type == "table" or node_type.endswith("_table"):
@@ -284,7 +286,7 @@ _CELL_CHILD_KEYS = ("kids", "children", "list items", "paragraphs", "blocks")
 
 
 def cell_text(cell: Any) -> str:
-    """Extract display text from nested OpenDataLoader table cells."""
+    """提取嵌套表格单元格中的显示文本。\n\n    Args:\n        cell: 单元格节点。\n\n    Returns:\n        单元格文本。\n    """
     if not isinstance(cell, dict):
         if isinstance(cell, list):
             return " ".join(part for part in (cell_text(item) for item in cell) if part).strip()
@@ -317,7 +319,7 @@ def cell_text(cell: Any) -> str:
 
 
 def table_to_rows(table_node: dict[str, Any]) -> list[list[str]]:
-    """Convert OpenDataLoader row/cell variants into normalized text rows."""
+    """将 OpenDataLoader 多种行/单元格结构转换为二维文本。\n\n    Args:\n        table_node: 表格节点。\n\n    Returns:\n        标准化后的二维表格行。\n    """
     rows = table_node.get("rows")
     if isinstance(rows, list):
         result: list[list[str]] = []
