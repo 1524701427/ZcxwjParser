@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from support_doc_extractor import extract_document
+from support_doc_extractor import SupportDocType, extract_document
 
 
 def main() -> None:
