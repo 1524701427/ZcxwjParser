@@ -1,3 +1,5 @@
+"""单文件解析业务入口。"""
+
 from __future__ import annotations
 
 import json
@@ -18,7 +20,7 @@ def extract_document(
     doc_type: SupportDocType | str,
     file_path: str | Path,
 ) -> dict[str, Any]:
-    """Parse one support document and return/write structured JSON results."""
+    """解析一个支持性文件并输出结构化结果。\n\n    Args:\n        doc_type: 文件类型枚举；兼容已支持的字符串别名。\n        file_path: 待解析的单个文件路径。\n\n    Returns:\n        包含业务结果、详细结果以及两个 JSON 输出路径的字典。\n\n    Raises:\n        FileNotFoundError: 输入文件不存在。\n        ValueError: 输入路径不是文件或文件类型不支持。\n        RuntimeError: 底层解析失败且无法降级。\n    """
     started_at = time.perf_counter()
     normalized_type = normalize_doc_type(doc_type)
     path = Path(file_path).expanduser().resolve()
@@ -62,7 +64,7 @@ def extract_document(
 
 
 def _validate_input_file(path: Path) -> None:
-    """Validate that the caller supplied one existing file."""
+    """校验输入路径必须是一个真实文件。\n\n    Args:\n        path: 待校验路径。\n\n    Raises:\n        FileNotFoundError: 路径不存在。\n        ValueError: 路径不是普通文件。\n    """
     if not path.exists():
         logger.error("task_failed file=%s reason=file_not_found", path)
         raise FileNotFoundError(f"文件不存在: {path}")
@@ -72,12 +74,12 @@ def _validate_input_file(path: Path) -> None:
 
 
 def _output_paths(path: Path) -> tuple[Path, Path]:
-    """Return business and detailed JSON output paths."""
+    """生成业务结果和详细结果文件路径。\n\n    Args:\n        path: 原始输入文件路径。\n\n    Returns:\n        业务 JSON 路径和详细 JSON 路径。\n    """
     return path.with_suffix(".json"), path.with_name(f"{path.stem}_details.json")
 
 
 def _write_json(path: Path, payload: Any) -> None:
-    """Write UTF-8 JSON with readable Chinese text."""
+    """写入 UTF-8 JSON 文件。\n\n    Args:\n        path: 输出文件路径。\n        payload: 可 JSON 序列化的数据。\n    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
@@ -86,7 +88,7 @@ def _write_json(path: Path, payload: Any) -> None:
 
 
 def _default_parser_name() -> str:
-    """Use OpenDataLoader when installed, otherwise fall back to PyMuPDF."""
+    """选择默认解析器。\n\n    Returns:\n        安装 OpenDataLoader 时返回 opendataloader_pdf，否则返回 pymupdf。\n    """
     try:
         import opendataloader_pdf  # noqa: F401
     except ImportError:
