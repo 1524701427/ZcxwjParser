@@ -17,6 +17,7 @@ opendataloader_pdf:
   hybrid_mode: full
   hybrid_url: null
   hybrid_batch_size: 5
+  hybrid_timeout: "120"
 
 chunking:
   max_chars: 3000
