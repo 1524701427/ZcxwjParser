@@ -189,3 +189,39 @@ OpenDataLoader 解析缓存放在 `runtime/parsed/`，按源文件路径、大�
 | svgCapacity | svg_capacity |
 
 `recognizeDate` 由程序生成当前识别时间，`remark` 默认输出 `null`。未识别到的业务字段也固定输出 `null`，保证 Java 反序列化结构稳定。
+
+
+## 日志
+
+程序使用 Python 标准库 logging，默认输出到控制台，不额外写日志文件。默认级别是 INFO。
+
+Linux / Docker:
+
+```bash
+export SUPPORT_DOC_LOG_LEVEL=INFO
+```
+
+Windows PowerShell:
+
+```powershell
+$env:SUPPORT_DOC_LOG_LEVEL="DEBUG"
+```
+
+也可以在代码中显式设置：
+
+```python
+from support_doc_extractor import configure_logging
+
+configure_logging("DEBUG")
+```
+
+主要日志事件包括：任务开始/结束、解析器选择、OpenDataLoader 缓存命中、PyMuPDF 降级、OCR 触发与缺页、各抽取器执行、Java FileContent 映射以及异常堆栈。
+
+示例：
+
+```text
+2026-09-22 16:30:00,123 | INFO | support_doc_extractor.engine | task_start file=/data/demo.pdf requested_type=接入批复 normalized_type=grid_access
+2026-09-22 16:30:01,456 | INFO | support_doc_extractor.engine | extract_done file=/data/demo.pdf doc_type=grid_access fields=10 warnings=0
+2026-09-22 16:30:01,457 | INFO | support_doc_extractor.mappers | java_mapping_done doc_type=grid_access populated_fields=10 total_fields=21
+2026-09-22 16:30:01,460 | INFO | support_doc_extractor.engine | task_done file=/data/demo.pdf doc_type=grid_access result=/data/demo.json details=/data/demo_details.json elapsed_ms=1337
+```
