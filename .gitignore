@@ -1,0 +1,13 @@
+.idea/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.env
+*.log
+
+output/
+support_doc_extractor/runtime/
+*_images/
+_hybrid_batches/
+_hybrid_stamp_pages/
