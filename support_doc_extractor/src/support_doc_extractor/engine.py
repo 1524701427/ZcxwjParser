@@ -23,6 +23,7 @@ from support_doc_extractor.models import (
 
 from support_doc_extractor.parsers import OpenDataLoaderParser, PyMuPDFParser
 from support_doc_extractor.logging_utils import get_logger
+from support_doc_extractor.document_types import SupportDocType, normalize_doc_type
 
 logger = get_logger("engine")
 
@@ -1510,38 +1511,6 @@ class SupportDocPipeline:
         return selected
 
 
-DOC_TYPE_ALIASES = {
-    "\u8d37\u6b3e\u610f\u5411\u4e66": "loan_intent",
-    "\u8d37\u6b3e": "loan_intent",
-    "loan_intent": "loan_intent",
-    "\u7528\u5730\u9884\u5ba1": "land_preapproval",
-    "\u7528\u5730\u9884\u5ba1\u4e0e\u9009\u5740\u610f\u89c1\u4e66": "land_preapproval",
-    "land_preapproval": "land_preapproval",
-    "\u73af\u8bc4\u6279\u590d": "environment_approval",
-    "\u73af\u8bc4\u610f\u89c1": "environment_approval",
-    "\u73af\u8bc4\u62a5\u544a": "environment_approval",
-    "environment_approval": "environment_approval",
-    "\u6c34\u4fdd\u6279\u590d": "soil_water_approval",
-    "\u6c34\u4fdd\u610f\u89c1": "soil_water_approval",
-    "\u6c34\u4fdd\u62a5\u544a": "soil_water_approval",
-    "soil_water_approval": "soil_water_approval",
-    "\u63a5\u5165\u6279\u590d": "grid_access",
-    "\u63a5\u5165\u610f\u89c1": "grid_access",
-    "\u63a5\u5165\u7cfb\u7edf\u6279\u590d": "grid_access",
-    "grid_access": "grid_access",
-}
-
-
-def normalize_doc_type(doc_type: str) -> str:
-    """Normalize Chinese document type names to configured type codes."""
-    key = (doc_type or "").strip()
-    normalized = DOC_TYPE_ALIASES.get(key)
-    if normalized:
-        return normalized
-    allowed = "\u3001".join(DOC_TYPE_ALIASES)
-    raise ValueError(f"\u4e0d\u652f\u6301\u7684\u6587\u4ef6\u7c7b\u578b: {doc_type}\u3002\u53ef\u7528\u7c7b\u578b: {allowed}")
-
-
 def output_paths_for(file_path: str | Path) -> tuple[Path, Path]:
     """????????????????"""
     path = Path(file_path).resolve()
@@ -1570,7 +1539,7 @@ def default_parser_name() -> str:
     return "opendataloader_pdf"
 
 
-def extract_document(doc_type: str, file_path: str | Path) -> dict[str, Any]:
+def extract_document(doc_type: SupportDocType | str, file_path: str | Path) -> dict[str, Any]:
     """Single public API: pass document type and file path, then write JSON files."""
     started_at = time.perf_counter()
     normalized_type = normalize_doc_type(doc_type)
@@ -1579,6 +1548,9 @@ def extract_document(doc_type: str, file_path: str | Path) -> dict[str, Any]:
     if not path.exists():
         logger.error("task_failed file=%s reason=file_not_found", path)
         raise FileNotFoundError(f"文件不存在: {path}")
+    if not path.is_file():
+        logger.error("task_failed file=%s reason=not_single_file", path)
+        raise ValueError(f"必须传入单个文件，不能传目录: {path}")
     try:
         pipeline = SupportDocPipeline(parser_name=default_parser_name())
         details = pipeline.infer_with_type(path, normalized_type).to_dict()
