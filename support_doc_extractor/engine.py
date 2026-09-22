@@ -1,3 +1,5 @@
+"""支持性文件分类、字段抽取、OCR 调度与结果合并核心流程。"""
+
 from __future__ import annotations
 
 import re
@@ -27,11 +29,11 @@ logger = get_logger("engine")
 # ==== 文档类型处理 ====
 
 class RuleClassifier:
-    """Classify support documents using filename and content keywords.
+    """根据文件名和正文关键词识别支持性文件类型。
 
     Args:
-        config: Optional parsed ``support_doc_types.yaml`` config. When omitted,
-            the default project config is loaded.
+        config: 可选的 support_doc_types.yaml 配置；未传时加载默认配置。
+
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
@@ -39,13 +41,13 @@ class RuleClassifier:
         self.document_types = self.config.get("document_types", {})
 
     def classify(self, document: Document) -> tuple[str, float, dict[str, Any]]:
-        """Classify a parsed document.
+        """识别已解析文档的业务类型。
 
         Args:
-            document: Unified document model.
+            document: 统一文档模型。
 
         Returns:
-            Tuple of document type, confidence, and matching details.
+            文件类型、置信度和匹配明细。
         """
         filename = str(document.file.name)
         text = document.full_text or document.rebuild_text()
@@ -77,12 +79,12 @@ class RuleClassifier:
         return best_type, confidence, details
 
     def fields_for(self, doc_type: str) -> list[str]:
-        """Return configured output fields for a document type."""
+        """获取指定文件类型配置的字段列表。\n\n        Args:\n            doc_type: 内部文件类型编码。\n\n        Returns:\n            需要抽取的字段名列表。\n        """
         spec = self.document_types.get(doc_type) or self.document_types.get("unknown_support_doc") or {}
         return list(spec.get("fields", []))
 
     def _looks_like_land_certificate(self, text: str) -> bool:
-        """Detect the certificate-style land preapproval layout."""
+        """判断是否为证书式用地预审批复版式。\n\n        Args:\n            text: 文档全文。\n\n        Returns:\n            命中证书式版式时返回 True。\n        """
         hints = [
             "\u81ea\u7136\u8d44\u6e90\u548c\u89c4\u5212\u5c40",
             "\u9879\u76ee\u89c4\u5212\u9009\u5740\u8303\u56f4\u56fe",
@@ -95,18 +97,18 @@ class RuleClassifier:
 # ==== 类型化抽取 ====
 
 class TypedExtractor:
-    """Extract fields for layouts that need document-type-specific logic."""
+    """处理需要按文件类型定制版式规则的字段抽取器。"""
 
     source = "typed"
 
     def extract(self, document: Document, fields: list[str]) -> list[ExtractedField]:
-        """Dispatch extraction by classified document type."""
+        """根据文件类型分派专用抽取逻辑。\n\n        Args:\n            document: 统一文档模型。\n            fields: 待抽取字段列表。\n\n        Returns:\n            字段候选列表。\n        """
         if document.doc_type == "land_preapproval":
             return self._land_preapproval(document, fields)
         return []
 
     def _land_preapproval(self, document: Document, fields: list[str]) -> list[ExtractedField]:
-        """Extract land preapproval fields from reply or certificate layouts."""
+        """从批复或证书版式中抽取用地预审字段。"""
         text = document.full_text or document.rebuild_text()
         results: list[ExtractedField] = []
         if self._looks_like_land_certificate(document):
@@ -116,7 +118,7 @@ class TypedExtractor:
         return results
 
     def _looks_like_land_certificate(self, document: Document) -> bool:
-        """Return whether the document has the certificate-style table page."""
+        """判断文档是否包含证书式表格页面。"""
         text = document.full_text or document.rebuild_text()
         if "\u5efa\u8bbe\u9879\u76ee\u7528\u5730\u9884\u5ba1\u4e0e\u9009\u5740\u610f\u89c1\u4e66" in text:
             return True
@@ -129,7 +131,7 @@ class TypedExtractor:
         return sum(1 for hint in hints if hint in text) >= 2
 
     def _land_certificate(self, document: Document, fields: list[str]) -> list[ExtractedField]:
-        """Extract from the two-column certificate form layout."""
+        """从双栏证书表单版式中抽取字段。"""
         blocks = sorted(document.pages[0].blocks if document.pages else [], key=lambda b: ((b.bbox or (0, 0, 0, 0))[1], (b.bbox or (0, 0, 0, 0))[0]), reverse=True)
         right_values = [b for b in blocks if b.bbox and b.bbox[0] > 500 and b.text]
         left_values = [b for b in blocks if b.bbox and 180 < b.bbox[0] < 340 and b.text]
@@ -168,7 +170,7 @@ class TypedExtractor:
         return results
 
     def _land_approval_reply(self, document: Document, fields: list[str]) -> list[ExtractedField]:
-        """Extract from ordinary narrative land preapproval replies."""
+        """从普通叙述式用地预审批复中抽取字段。"""
         text = document.full_text or document.rebuild_text()
         results: list[ExtractedField] = []
         title_match = re.search(r"\u5173\u4e8e.{5,80}?\u5efa\u8bbe\u7528\u5730\u9884\u5ba1\u7684\u6279\u590d", text)
@@ -197,12 +199,12 @@ class TypedExtractor:
 
 
 def cleanup(text: str) -> str:
-    """Compact Chinese field text and trim common punctuation."""
+    """压缩中文字段空白并移除常见首尾标点。\n\n    Args:\n        text: 原始文本。\n\n    Returns:\n        清洗后的文本。\n    """
     return re.sub(r"\s+", "", text or "").strip("\uff1a: ,\uff0c")
 
 
 def is_area_value(text: str) -> bool:
-    """Return whether text is a land-area value."""
+    """判断文本是否为面积值。\n\n    Args:\n        text: 待判断文本。\n\n    Returns:\n        命中面积表达时返回 True。\n    """
     value = cleanup(text)
     if not value:
         return False
@@ -1158,10 +1160,10 @@ from support_doc_extractor.normalizers import normalize_field, validate_field
 # ==== 候选合并 ====
 
 class ResultMerger:
-    """Normalize, validate, and select the best candidate for each field."""
+    """标准化、校验并选择每个字段的最佳候选。"""
 
     def __init__(self, extraction_config: dict[str, Any] | None = None) -> None:
-        """Initialize source priority weights from extraction config."""
+        """初始化各候选来源的优先级权重。"""
         self.extraction_config = extraction_config or load_config(config_path("extraction.yaml"))
         self.source_priorities = self.extraction_config.get("candidate_priorities", {})
 
@@ -1171,7 +1173,7 @@ class ResultMerger:
         candidates: list[ExtractedField],
         tables: list[Table] | None = None,
     ) -> ExtractionResult:
-        """Merge extractor candidates into one JSON-ready result."""
+        """合并各抽取器候选并生成最终结果。\n\n        Args:\n            document: 统一文档模型。\n            candidates: 字段候选列表。\n            tables: 识别到的表格列表。\n\n        Returns:\n            合并后的结构化抽取结果。\n        """
         result = ExtractionResult(file=document.file, doc_type=document.doc_type, tables=tables or [], meta=dict(document.meta))
         if document.meta.get("ocr_incomplete"):
             result.warnings.append(f"ocr_incomplete:fallback_pages={document.meta.get('fallback_pages') or []}")
@@ -1192,23 +1194,23 @@ class ResultMerger:
 
 
 class SupportDocPipeline:
-    """End-to-end parser, classifier, extractor, and merger for support docs.
+    """支持性文件解析、OCR、抽取和结果合并的完整流水线。
 
     Args:
-        parser_name: Parser backend name, either ``pymupdf`` or
-            ``opendataloader_pdf``.
-        parsed_root: Optional directory for parsed JSON/cache files.
-        extraction_config: Optional extraction pipeline YAML path.
-        auto_ocr: Whether to invoke OCR fallback for low-text/image PDFs.
-        min_text_chars: Minimum text threshold before a document is considered
-            OCR-needed.
-        hybrid_backend: Optional opendataloader hybrid OCR backend.
-        hybrid_url: Optional hybrid service URL.
-        hybrid_mode: Hybrid OCR mode passed through to opendataloader.
-        hybrid_batch_size: Page batch size hint for OCR fallback.
-        ocr_page_dpi: DPI used when rendering single-page OCR PDFs.
-        ocr_page_max_side: Maximum rendered page image side.
-        refresh_parsed: Whether to discard existing parsed cache.
+        parser_name: 解析器名称，可选 pymupdf 或 opendataloader_pdf。
+
+        parsed_root: 解析 JSON 和缓存目录。
+        extraction_config: 抽取流程 YAML 配置路径。
+        auto_ocr: 是否在低文本或图片型 PDF 时自动启用 OCR。
+        min_text_chars: 判断是否需要 OCR 的最小文本字符数。
+
+        hybrid_backend: OpenDataLoader Hybrid OCR 后端。
+        hybrid_url: Hybrid OCR 服务地址。
+        hybrid_mode: Hybrid OCR 模式。
+        hybrid_batch_size: OCR 批处理页数提示。
+        ocr_page_dpi: 单页 OCR 渲染 DPI。
+        ocr_page_max_side: OCR 渲染图片最长边。
+        refresh_parsed: 是否忽略已有解析缓存。
     """
 
     def __init__(
@@ -1248,13 +1250,13 @@ class SupportDocPipeline:
         self.merger = ResultMerger(self.extraction_config)
 
     def parse(self, path: Path) -> Document:
-        """Parse a document and optionally apply OCR fallback.
+        """解析单个文档，并按需执行 OCR 兜底。
 
         Args:
-            path: PDF or Word file path.
+            path: 输入文件路径。
 
         Returns:
-            Unified document model consumed by extractors.
+            供后续抽取器使用的统一文档模型。
         """
         logger.info("parse_start file=%s parser=%s", path, self.parser_name)
         started_at = time.perf_counter()
@@ -1340,7 +1342,7 @@ class SupportDocPipeline:
         path: Path,
         fallback_document: Document | None = None,
     ) -> Document:
-        """OCR each page and preserve the original parse for failed pages."""
+        """逐页执行 OCR，并在失败页保留原始解析结果。"""
         page_count = pdf_page_count(path)
         fallback_pages = {int(page.page_no): page for page in (fallback_document.pages if fallback_document else []) if page.page_no is not None}
         pages: list[Page] = []
@@ -1381,7 +1383,7 @@ class SupportDocPipeline:
 
         if not pages:
             if page_errors:
-                raise RuntimeError(f"All hybrid OCR pages failed: {page_errors[:3]}")
+                raise RuntimeError(f"所有 Hybrid OCR 页面均失败: {page_errors[:3]}")
             return self._parse_with_hybrid(path)
 
         pages.sort(key=lambda page: int(page.page_no or 0))
@@ -1424,20 +1426,20 @@ class SupportDocPipeline:
         return OpenDataLoaderParser(output_root=hybrid_root, options=options).parse(temp_pdf)
 
     def infer(self, path: Path) -> ExtractionResult:
-        """Extract configured fields from a single support document.
+        """从单个支持性文件中抽取配置字段。
 
         Args:
-            path: Input document path.
+            path: 输入文件路径。
 
         Returns:
-            Merged and normalized extraction result.
+            合并并标准化后的抽取结果。
         """
         document = self.parse(path)
         doc_type, _, _ = self.classifier.classify(document)
         return self.infer_document(document, doc_type)
 
     def infer_with_type(self, path: Path, doc_type: str) -> ExtractionResult:
-        """Extract a document with an explicitly supplied document type."""
+        """按调用方明确指定的文件类型执行抽取。\n\n        Args:\n            path: 输入文件路径。\n            doc_type: 内部文件类型编码。\n\n        Returns:\n            最终结构化抽取结果。\n        """
         logger.info("extract_start file=%s doc_type=%s", path, doc_type)
         document = self.parse(path)
         result = self.infer_document(document, doc_type)
@@ -1451,7 +1453,7 @@ class SupportDocPipeline:
         return result
 
     def infer_document(self, document: Document, doc_type: str) -> ExtractionResult:
-        """Extract configured fields from an already parsed document."""
+        """从已解析文档中执行配置化字段抽取。\n\n        Args:\n            document: 已解析统一文档。\n            doc_type: 内部文件类型编码。\n\n        Returns:\n            最终结构化抽取结果。\n        """
         document.doc_type = doc_type
         fields = self.classifier.fields_for(doc_type)
 
@@ -1506,7 +1508,7 @@ class SupportDocPipeline:
 
 
 def needs_ocr(document: Document, min_text_chars: int = 120) -> bool:
-    """Return whether parsed content looks too sparse to trust."""
+    """判断解析文本是否过少，需要进入 OCR 兜底。\n\n    Args:\n        document: 已解析文档。\n        min_text_chars: 最小可信文本字符数。\n\n    Returns:\n        需要 OCR 时返回 True。\n    """
     text = document.full_text or document.rebuild_text()
     if len(text.strip()) < min_text_chars:
         return True
@@ -1520,7 +1522,7 @@ def needs_ocr(document: Document, min_text_chars: int = 120) -> bool:
 
 
 def ocr_reason(document: Document, min_text_chars: int = 120) -> str:
-    """Return the main reason a document was routed to OCR fallback."""
+    """返回文档进入 OCR 兜底的主要原因。\n\n    Args:\n        document: 已解析文档。\n        min_text_chars: 最小可信文本字符数。\n\n    Returns:\n        OCR 原因编码。\n    """
     text = document.full_text or document.rebuild_text()
     if len(text.strip()) < min_text_chars:
         return "low_text"
@@ -1536,7 +1538,7 @@ def ocr_reason(document: Document, min_text_chars: int = 120) -> str:
 
 
 def has_large_image_low_text(document: Document, min_page_text_chars: int = 500, min_image_ratio: float = 0.6) -> bool:
-    """Detect scanned pages represented as one large image plus little text."""
+    """检测“大图 + 少量文本”的扫描页。\n\n    Args:\n        document: 已解析文档。\n        min_page_text_chars: 页面文本阈值。\n        min_image_ratio: 大图占页面面积的最小比例。\n\n    Returns:\n        命中扫描页特征时返回 True。\n    """
     for page in document.pages:
         page_text = page.text or "\n".join(block.text for block in page.blocks if block.text)
         if len(page_text.strip()) >= min_page_text_chars:
@@ -1557,21 +1559,21 @@ def has_large_image_low_text(document: Document, min_page_text_chars: int = 500,
 
 
 def pdf_page_count(path: Path) -> int:
-    """Return the number of pages in a PDF file."""
+    """获取 PDF 页数。\n\n    Args:\n        path: PDF 文件路径。\n\n    Returns:\n        PDF 页数。\n    """
     try:
         import fitz
     except ImportError as exc:
-        raise RuntimeError("PyMuPDF is required to count PDF pages for batched hybrid OCR.") from exc
+        raise RuntimeError("批量 Hybrid OCR 统计页数需要安装 pymupdf。") from exc
     with fitz.open(path) as doc:
         return doc.page_count
 
 
 def render_page_to_pdf(source_pdf: Path, page_no: int, output_pdf: Path, dpi: int, max_side: int) -> None:
-    """Render one source page into a temporary image-only PDF for OCR."""
+    """将指定页渲染为临时纯图片 PDF 供 OCR 使用。\n\n    Args:\n        source_pdf: 原始 PDF 路径。\n        page_no: 页码，从 1 开始。\n        output_pdf: 临时输出 PDF 路径。\n        dpi: 渲染 DPI。\n        max_side: 图片最长边限制。\n    """
     try:
         import fitz
     except ImportError as exc:
-        raise RuntimeError("PyMuPDF is required to create memory-safe OCR page PDFs.") from exc
+        raise RuntimeError("生成 OCR 临时单页 PDF 需要安装 pymupdf。") from exc
 
     with fitz.open(source_pdf) as src:
         page = src[page_no - 1]
