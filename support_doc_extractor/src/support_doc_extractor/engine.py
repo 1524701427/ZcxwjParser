@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,9 @@ from support_doc_extractor.models import (
 
 
 from support_doc_extractor.parsers import OpenDataLoaderParser, PyMuPDFParser
+from support_doc_extractor.logging_utils import get_logger
+
+logger = get_logger("engine")
 
 # ==== 文档类型处理 ====
 
@@ -1257,6 +1261,8 @@ class SupportDocPipeline:
         Returns:
             Unified document model consumed by extractors.
         """
+        logger.info("parse_start file=%s parser=%s", path, self.parser_name)
+        started_at = time.perf_counter()
         if self.parser_name == "opendataloader_pdf":
             parser_config = load_config(config_path("parser.yaml"))
             options = parser_config.get("opendataloader_pdf", {})
@@ -1267,6 +1273,12 @@ class SupportDocPipeline:
                 document = OpenDataLoaderParser(output_root=self.parsed_root, options=options).parse(path)
                 document = append_image_block_ocr(document, self.parsed_root)
             except Exception as exc:
+                logger.warning(
+                    "parser_fallback file=%s from=opendataloader_pdf to=pymupdf error=%s: %s",
+                    path,
+                    type(exc).__name__,
+                    exc,
+                )
                 document = PyMuPDFParser().parse(path)
                 document.meta["parser_fallback"] = "pymupdf"
                 document.meta["parser_error"] = f"{type(exc).__name__}: {exc}"
@@ -1275,19 +1287,41 @@ class SupportDocPipeline:
         if self.auto_ocr and needs_ocr(document, min_text_chars=self.min_text_chars):
             document.meta["needs_ocr"] = True
             document.meta["ocr_reason"] = ocr_reason(document, min_text_chars=self.min_text_chars)
+            logger.info(
+                "ocr_required file=%s reason=%s text_chars=%d",
+                path,
+                document.meta["ocr_reason"],
+                len(document.full_text or ""),
+            )
             if self.parser_name == "opendataloader_pdf" and self.hybrid_backend:
                 try:
                     hybrid_document = self._parse_with_hybrid_batches(path, fallback_document=document)
                     hybrid_document.meta.update(document.meta)
                     hybrid_document.meta["hybrid_used"] = True
                     if not needs_ocr(hybrid_document, min_text_chars=self.min_text_chars):
+                        logger.info(
+                            "hybrid_ocr_success file=%s pages=%d elapsed_ms=%d",
+                            path,
+                            len(hybrid_document.pages),
+                            int((time.perf_counter() - started_at) * 1000),
+                        )
                         return hybrid_document
                     hybrid_document.meta["hybrid_low_text"] = True
                     document = hybrid_document
                 except Exception as exc:
+                    logger.warning("hybrid_ocr_failed file=%s error=%s: %s", path, type(exc).__name__, exc)
                     document.meta["hybrid_error"] = f"{type(exc).__name__}: {exc}"
             elif self.parser_name == "opendataloader_pdf":
+                logger.warning("ocr_unavailable file=%s reason=hybrid_backend_not_configured", path)
                 document.meta["ocr_error"] = "hybrid_backend_not_configured"
+        logger.info(
+            "parse_done file=%s parser=%s pages=%d text_chars=%d elapsed_ms=%d",
+            path,
+            document.parser or self.parser_name,
+            len(document.pages),
+            len(document.full_text or ""),
+            int((time.perf_counter() - started_at) * 1000),
+        )
         return document
 
     def _parse_with_hybrid(self, path: Path) -> Document:
@@ -1322,6 +1356,13 @@ class SupportDocPipeline:
             try:
                 page_document = self._parse_with_hybrid_page(path, page_no)
             except Exception as exc:
+                logger.warning(
+                    "hybrid_page_failed file=%s page=%d error=%s: %s",
+                    path,
+                    page_no,
+                    type(exc).__name__,
+                    exc,
+                )
                 page_errors.append({"page": page_no, "error": f"{type(exc).__name__}: {exc}"})
                 fallback_page = fallback_pages.get(page_no)
                 if fallback_page is not None:
@@ -1357,6 +1398,11 @@ class SupportDocPipeline:
         if fallback_page_numbers:
             document.meta["ocr_incomplete"] = True
             document.meta["fallback_pages"] = sorted(set(fallback_page_numbers))
+            logger.warning(
+                "hybrid_ocr_incomplete file=%s fallback_pages=%s",
+                path,
+                document.meta["fallback_pages"],
+            )
         document.rebuild_text()
         return document
 
@@ -1397,8 +1443,17 @@ class SupportDocPipeline:
 
     def infer_with_type(self, path: Path, doc_type: str) -> ExtractionResult:
         """Extract a document with an explicitly supplied document type."""
+        logger.info("extract_start file=%s doc_type=%s", path, doc_type)
         document = self.parse(path)
-        return self.infer_document(document, doc_type)
+        result = self.infer_document(document, doc_type)
+        logger.info(
+            "extract_done file=%s doc_type=%s fields=%d warnings=%d",
+            path,
+            doc_type,
+            len(result.fields),
+            len(result.warnings),
+        )
+        return result
 
     def infer_document(self, document: Document, doc_type: str) -> ExtractionResult:
         """Extract configured fields from an already parsed document."""
@@ -1420,7 +1475,21 @@ class SupportDocPipeline:
                 candidates.extend(table_candidates)
             elif extractor_name == "rule":
                 candidates.extend(self.rule_extractor.extract(document, selected_fields))
-        return self.merger.merge(document, candidates, tables=tables)
+            logger.debug(
+                "extractor_done file=%s extractor=%s selected_fields=%d candidates=%d",
+                document.file,
+                extractor_name,
+                len(selected_fields),
+                len(candidates),
+            )
+        result = self.merger.merge(document, candidates, tables=tables)
+        logger.debug(
+            "merge_done file=%s candidates=%d output_fields=%s",
+            document.file,
+            len(candidates),
+            sorted(result.fields),
+        )
+        return result
 
     def _enabled_extractor_order(self) -> list[str]:
         order = self.extraction_config.get("pipeline", {}).get("order", [])
@@ -1503,16 +1572,31 @@ def default_parser_name() -> str:
 
 def extract_document(doc_type: str, file_path: str | Path) -> dict[str, Any]:
     """Single public API: pass document type and file path, then write JSON files."""
+    started_at = time.perf_counter()
     normalized_type = normalize_doc_type(doc_type)
     path = Path(file_path).resolve()
+    logger.info("task_start file=%s requested_type=%s normalized_type=%s", path, doc_type, normalized_type)
     if not path.exists():
+        logger.error("task_failed file=%s reason=file_not_found", path)
         raise FileNotFoundError(f"文件不存在: {path}")
-    pipeline = SupportDocPipeline(parser_name=default_parser_name())
-    details = pipeline.infer_with_type(path, normalized_type).to_dict()
-    result = simple_result(details)
-    result_path, details_path = output_paths_for(path)
-    write_json(result_path, result)
-    write_json(details_path, details)
+    try:
+        pipeline = SupportDocPipeline(parser_name=default_parser_name())
+        details = pipeline.infer_with_type(path, normalized_type).to_dict()
+        result = simple_result(details)
+        result_path, details_path = output_paths_for(path)
+        write_json(result_path, result)
+        write_json(details_path, details)
+    except Exception:
+        logger.exception("task_failed file=%s doc_type=%s", path, normalized_type)
+        raise
+    logger.info(
+        "task_done file=%s doc_type=%s result=%s details=%s elapsed_ms=%d",
+        path,
+        normalized_type,
+        result_path,
+        details_path,
+        int((time.perf_counter() - started_at) * 1000),
+    )
     return {
         "result_path": str(result_path),
         "details_path": str(details_path),
