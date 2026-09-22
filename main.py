@@ -1613,7 +1613,7 @@ def run_opendataloader_convert(
                 "hybrid": hybrid_backend,
                 "hybrid_mode": hybrid_mode,
                 "hybrid_url": hybrid_url,
-                "hybrid_timeout": "0",
+                "hybrid_timeout": "120",
                 "hybrid_fallback": True,
             }
         )
