@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from support_doc_extractor.models import Block, Document, Page, Table
+from support_doc_extractor.logging_utils import get_logger
+
+logger = get_logger("parsers")
 
 # ==== 解析器基础 ====
 
@@ -49,6 +52,7 @@ class PyMuPDFParser(Parser):
         except ImportError as exc:
             raise RuntimeError("PyMuPDF is required for fallback parsing. Install pymupdf.") from exc
 
+        logger.debug("pymupdf_parse_start file=%s", path)
         pages: list[Page] = []
         with fitz.open(path) as doc:
             for page_index, page in enumerate(doc, 1):
@@ -65,6 +69,12 @@ class PyMuPDFParser(Parser):
                 )
         document = Document(file=path, pages=pages, parser=self.name)
         document.rebuild_text()
+        logger.info(
+            "pymupdf_parse_done file=%s pages=%d text_chars=%d",
+            path,
+            len(document.pages),
+            len(document.full_text or ""),
+        )
         return document
 
 
@@ -105,6 +115,7 @@ class OpenDataLoaderParser(Parser):
         else:
             existing = self._find_output_json(path)
             if existing is not None:
+                logger.debug("parser_cache_hit file=%s cache=%s", path, existing)
                 return existing
         try:
             import opendataloader_pdf
@@ -112,10 +123,13 @@ class OpenDataLoaderParser(Parser):
             raise RuntimeError("opendataloader_pdf is not installed.") from exc
         cache_dir = self._cache_dir(path)
         cache_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("opendataloader_convert_start file=%s cache_dir=%s", path, cache_dir)
         opendataloader_pdf.convert(**self._build_convert_options(path, opendataloader_pdf.convert))
         produced = self._find_output_json(path)
         if produced is None:
+            logger.error("opendataloader_output_missing file=%s cache_dir=%s", path, cache_dir)
             raise FileNotFoundError(f"opendataloader output JSON not found for {path}")
+        logger.info("opendataloader_convert_done file=%s json=%s", path, produced)
         return produced
 
     def _cleanup_existing_output(self, path: Path) -> None:
@@ -124,6 +138,7 @@ class OpenDataLoaderParser(Parser):
         cache_dir = self._cache_dir(path)
         if cache_dir.exists():
             import shutil
+            logger.debug("parser_cache_clear file=%s cache_dir=%s", path, cache_dir)
             shutil.rmtree(cache_dir)
 
     def _build_convert_options(self, path: Path, convert_func: Any) -> dict[str, Any]:
