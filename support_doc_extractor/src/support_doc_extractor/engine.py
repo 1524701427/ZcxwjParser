@@ -646,6 +646,7 @@ GRID_ACCESS_FIELDS = {
     "access_investment",
     "access_plan",
     "access_station",
+    "access_location",
     "outgoing_circuits",
     "access_distance",
     "conductor_section",
@@ -685,6 +686,10 @@ PATTERNS: dict[str, list[str]] = {
     "land_control_area": [
         r"(?:\u9879\u76ee\u7528\u5730|\u7528\u5730\u8303\u56f4|\u63a7\u5236\u7528\u5730\u89c4\u6a21)[^\u3002\uff1b;\n]{0,20}?(?:\u5e94\u63a7\u5236\u5728|\u63a7\u5236\u5728|\u4e3a)\s*([0-9,.]+\s*(?:\u516c\u9877|\u4ea9|\u5e73\u65b9\u7c73|m2|\u33a1))",
         r"(?:\u5e94\u63a7\u5236\u5728|\u63a7\u5236\u5728)\s*([0-9,.]+\s*(?:\u516c\u9877|\u4ea9|\u5e73\u65b9\u7c73|m2|\u33a1))",
+    ],
+    "land_control": [
+        r"((?:\u4e0d\u5360\u7528|\u4e0d\u6d89\u53ca|\u672a\u5360\u7528)[^\u3002\uff1b;\n]{0,50}(?:\u6c38\u4e45\u57fa\u672c\u519c\u7530|\u57fa\u672c\u519c\u7530))",
+        r"(\u9879\u76ee\u7528\u5730[^\u3002\uff1b;\n]{0,100}(?:\u5e94\u63a7\u5236\u5728|\u63a7\u5236\u5728)[^\u3002\uff1b;\n]{1,60})",
     ],
     "access_voltage": [r"(\d+\s*kV)"],
     "line_length": [
@@ -748,6 +753,7 @@ def extract_grid_access_field(field: str, raw_text: str) -> ExtractedField | Non
         "access_investment": extract_access_investment,
         "access_plan": extract_access_plan,
         "access_station": extract_access_station,
+        "access_location": extract_access_location,
         "outgoing_circuits": extract_outgoing_circuits,
         "access_distance": extract_access_distance,
         "conductor_section": extract_conductor_section,
@@ -822,6 +828,17 @@ def extract_access_plan(text: str) -> tuple[str | None, str | None, dict]:
 def extract_access_station(text: str) -> tuple[str | None, str | None, dict]:
     plan, _, _ = extract_access_plan(text)
     return first_match(plan or text, [r"\u63a5\u5165([\u4e00-\u9fa5A-Za-z0-9~\uff5e]{2,30}(?:\u53d8|\u5347\u538b\u7ad9))"])
+
+
+def extract_access_location(text: str) -> tuple[str | None, str | None, dict]:
+    """Extract explicit access/connection location text without confusing it with station name."""
+    return first_match(
+        text,
+        [
+            r"(?:接入位置|接入地点|接入点|并网位置|并网地点)[:：]?\s*([^。；;，,]{2,80})",
+            r"(?:位于|位于项目所在地)\s*([^。；;]{2,60})(?:的|附近)?(?:接入点|并网点)",
+        ],
+    )
 
 
 def extract_outgoing_circuits(text: str) -> tuple[str | None, str | None, dict]:
@@ -1136,6 +1153,7 @@ def _remove_red_stamp(image_path: Path) -> Path | None:
 
 
 from support_doc_extractor.normalizers import normalize_field, validate_field
+from support_doc_extractor.mappers import to_file_content
 
 # ==== 候选合并 ====
 
@@ -1464,16 +1482,8 @@ def output_paths_for(file_path: str | Path) -> tuple[Path, Path]:
 
 
 def simple_result(details: dict[str, Any]) -> dict[str, Any]:
-    """??????????????? JSON?"""
-    fields = {}
-    for name, item in details.get("fields", {}).items():
-        normalized = item.get("normalized")
-        fields[name] = normalized if normalized is not None else item.get("value")
-    return {
-        "file": details.get("file"),
-        "doc_type": details.get("doc_type"),
-        "fields": fields,
-    }
+    """Map internal extraction details to the Java FileContent JSON contract."""
+    return to_file_content(details)
 
 
 def write_json(path: Path, payload: Any) -> None:
