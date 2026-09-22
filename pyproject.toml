@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["support_doc_extractor/src"]
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.ruff]
