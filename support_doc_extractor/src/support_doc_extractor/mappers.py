@@ -80,6 +80,6 @@ def to_file_content(details: dict[str, Any]) -> dict[str, Any]:
         "mainTransformerCapacity": _raw_value(details, "main_transformer_capacity"),
         "mainTransformerWiringMode": _raw_value(details, "main_transformer_wiring"),
         "svgCapacity": _raw_value(details, "svg_capacity"),
-        "recognizeDate": datetime.now().astimezone().replace(microsecond=0).isoformat(),
+        "recognizeDate": datetime.now().replace(microsecond=0).isoformat(),
         "remark": None,
     }
