@@ -160,6 +160,13 @@ fields:
     type: percent
     extractors: [rule]
 
+  land_control:
+    name: 用地控制
+    prompt: 用地控制
+    aliases: [用地控制, 用地要求, 项目用地要求, 永久基本农田, 基本农田]
+    type: text
+    extractors: [table, rule]
+
   land_control_area:
     name: 用地控制指标
     prompt: 用地控制指标
@@ -180,6 +187,13 @@ fields:
     aliases: [接入方案, 接入系统方案, 接入系统一次方案]
     type: long_text
     extractors: [rule]
+
+  access_location:
+    name: 接入位置
+    prompt: 接入位置
+    aliases: [接入位置, 接入地点, 接入点, 并网位置, 并网地点, 并网点]
+    type: location
+    extractors: [table, rule]
 
   outgoing_circuits:
     name: 送出回路数
