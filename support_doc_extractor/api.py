@@ -19,6 +19,9 @@ logger = get_logger("api")
 def extract_document(
     doc_type: SupportDocType | str,
     file_path: str | Path,
+    *,
+    parsed_root: str | Path | None = None,
+    write_files: bool = True,
 ) -> dict[str, Any]:
     """解析一个支持性文件并输出结构化结果。\n\n    Args:\n        doc_type: 文件类型枚举；兼容已支持的字符串别名。\n        file_path: 待解析的单个文件路径。\n\n    Returns:\n        包含业务结果、详细结果以及两个 JSON 输出路径的字典。\n\n    Raises:\n        FileNotFoundError: 输入文件不存在。\n        ValueError: 输入路径不是文件或文件类型不支持。\n        RuntimeError: 底层解析失败且无法降级。\n    """
     started_at = time.perf_counter()
@@ -35,13 +38,20 @@ def extract_document(
     _validate_input_file(path)
 
     try:
-        pipeline = SupportDocPipeline(parser_name=_default_parser_name())
+        cache_root = Path(parsed_root).expanduser().resolve() if parsed_root is not None else None
+        pipeline = SupportDocPipeline(
+            parser_name=_default_parser_name(),
+            parsed_root=cache_root,
+        )
         details = pipeline.infer_with_type(path, normalized_type).to_dict()
         result = to_file_content(details)
 
-        result_path, details_path = _output_paths(path)
-        _write_json(result_path, result)
-        _write_json(details_path, details)
+        result_path: Path | None = None
+        details_path: Path | None = None
+        if write_files:
+            result_path, details_path = _output_paths(path)
+            _write_json(result_path, result)
+            _write_json(details_path, details)
     except Exception:
         logger.exception("task_failed file=%s doc_type=%s", path, normalized_type)
         raise
@@ -50,14 +60,14 @@ def extract_document(
         "task_done file=%s doc_type=%s result=%s details=%s elapsed_ms=%d",
         path,
         normalized_type,
-        result_path,
-        details_path,
+        result_path or "-",
+        details_path or "-",
         int((time.perf_counter() - started_at) * 1000),
     )
 
     return {
-        "result_path": str(result_path),
-        "details_path": str(details_path),
+        "result_path": str(result_path) if result_path is not None else None,
+        "details_path": str(details_path) if details_path is not None else None,
         "result": result,
         "details": details,
     }
