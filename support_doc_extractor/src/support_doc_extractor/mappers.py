@@ -4,18 +4,9 @@ from datetime import datetime
 from typing import Any
 
 from support_doc_extractor.logging_utils import get_logger
+from support_doc_extractor.document_types import SupportDocType
 
 logger = get_logger("mappers")
-
-
-FILE_TYPE_NAMES = {
-    "loan_intent": "贷款意向文件",
-    "land_preapproval": "用地预审文件",
-    "soil_water_approval": "水保批复文件",
-    "environment_approval": "环保批复文件",
-    "grid_access": "接入批复文件",
-    "unknown_support_doc": "未知支持性文件",
-}
 
 
 def _raw_value(details: dict[str, Any], field_name: str) -> Any:
@@ -65,7 +56,7 @@ def to_file_content(details: dict[str, Any]) -> dict[str, Any]:
     land_control = _raw_value(details, "land_control") or _raw_value(details, "land_control_area")
 
     result = {
-        "fileType": FILE_TYPE_NAMES.get(doc_type, doc_type),
+        "fileType": SupportDocType.parse(doc_type).display_name if doc_type != "unknown_support_doc" else "未知支持性文件",
         "approvalUnit": _raw_value(details, "approval_agency"),
         "dispatchNo": _raw_value(details, "document_no"),
         "obtainDate": _local_datetime_value(details, "issue_date"),
