@@ -5,9 +5,9 @@
 ## 当前架构
 
 ```text
-Word / PDF
+PDF
   -> 文档加载与解析层
-     Aspose.Words / OpenDataLoader / PyMuPDF
+     OpenDataLoader / PyMuPDF
   -> 统一文档模型
      页面、标题、段落、表格、样式、坐标、图片信息
   -> 配置化抽取引擎
@@ -30,7 +30,9 @@ support_doc_extractor/
   src/support_doc_extractor/
     __init__.py             # 对外入口
     models.py               # 统一模型、配置路径、配置读取
-    engine.py               # 解析、分类、抽取、合并、命令入口
+    parsers.py              # PyMuPDF/OpenDataLoader 解析、缓存与表格适配
+    normalizers.py          # 字段标准化与校验
+    engine.py               # 分类、抽取、OCR 调度、候选合并、业务入口
 ```
 
 ## 调用方式
@@ -157,4 +159,4 @@ print(output["details_path"])   # 支持性文件/示例_details.json
 3. 简单关键词字段在 `src/support_doc_extractor/engine.py` 的规则配置里增加正则。
 4. 版式固定字段在 `src/support_doc_extractor/engine.py` 的类型抽取逻辑里增加处理。
 
-运行时生成的解析缓存和结果都放在 `runtime/`，可以删除后重新生成。
+OpenDataLoader 解析缓存放在 `runtime/parsed/`，按源文件路径、大小和修改时间隔离；业务 JSON 结果默认写在输入文件旁边。`runtime/` 可以删除后重新生成。
