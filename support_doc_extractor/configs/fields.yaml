@@ -1,0 +1,231 @@
+fields:
+  title:
+    name: 标题
+    prompt: 标题
+    aliases: [标题, 文件标题, 批复标题, 主标题, 证书标题]
+    type: text
+    extractors: [layout, rule]
+
+  document_no:
+    name: 文号
+    prompt: 文号
+    aliases: [文号, 文件编号, 编号, 证书编号, 批复编号, 备案编号]
+    type: document_no
+    extractors: [rule]
+
+  issue_date:
+    name: 发文日期
+    prompt: 发文日期
+    aliases: [日期, 发文日期, 批复日期, 落款日期, 印发日期, 发证日期]
+    type: date
+    extractors: [rule]
+
+  approval_agency:
+    name: 发文单位
+    prompt: 发文单位
+    aliases: [发文单位, 发文机关, 批准单位, 审批单位, 发证机关, 批复单位]
+    type: organization
+    extractors: [layout, rule]
+
+  project_name:
+    name: 项目名称
+    prompt: 项目名称
+    aliases: [项目名称, 工程名称, 建设项目]
+    type: text
+    extractors: [table, rule]
+
+  project_code:
+    name: 项目代码
+    prompt: 项目代码
+    aliases: [项目代码, 备案代码, 核准代码]
+    type: code
+    extractors: [table, rule]
+
+  construction_unit:
+    name: 建设单位
+    prompt: 建设单位
+    aliases: [建设单位, 项目单位, 申请单位, 业主单位]
+    type: organization
+    extractors: [table, rule]
+
+  project_basis:
+    name: 项目建设依据
+    prompt: 项目建设依据
+    aliases: [项目建设依据, 建设依据, 批准依据, 立项依据]
+    type: long_text
+    extractors: [table]
+
+  project_location:
+    name: 项目位置
+    prompt: 项目位置
+    aliases: [项目位置, 项目地点, 建设地点, 拟选位置, 场址]
+    type: location
+    extractors: [table, rule]
+
+  capacity:
+    name: 装机容量
+    prompt: 装机容量
+    aliases: [容量, 装机容量, 总装机规模]
+    type: capacity
+    extractors: [table, rule]
+
+  land_area:
+    name: 用地面积
+    prompt: 用地面积
+    aliases: [用地面积, 拟用地面积, 占地面积, 总用地面积, 永久用地, 临时用地]
+    type: area
+    extractors: [table, rule]
+
+  construction_scale:
+    name: 建设规模
+    prompt: 建设规模
+    aliases: [建设规模, 拟建设规模, 工程规模, 规模]
+    type: text
+    extractors: [table, rule]
+
+  total_investment:
+    name: 总投资
+    prompt: 总投资
+    aliases: [总投资, 工程投资, 项目投资, 概算投资]
+    type: money
+    extractors: [table, rule]
+
+  environmental_investment:
+    name: 环保投资
+    prompt: 环保投资
+    aliases: [环保投资, 环境保护投资]
+    type: money
+    extractors: [rule, table]
+
+  soil_water_investment:
+    name: 水土保持投资
+    prompt: 水土保持投资
+    aliases: [水土保持投资, 水土保持工程投资, 水土保持工程概算投资]
+    type: money
+    extractors: [rule, table]
+
+  soil_water_compensation_fee:
+    name: 水土保持补偿费
+    prompt: 水土保持补偿费
+    aliases: [水土保持补偿费, 水保补偿费, 补偿费]
+    type: money
+    extractors: [rule, table]
+
+  access_voltage:
+    name: 接入电压等级
+    prompt: 接入电压等级
+    aliases: [接入电压等级, 电压等级]
+    type: voltage
+    extractors: [rule]
+
+  access_station:
+    name: 接入站点
+    prompt: 接入站点
+    aliases: [接入站点, 接入变电站, 汇集站, 升压站, 并网点]
+    type: text
+    extractors: [rule]
+
+  line_length:
+    name: 线路长度
+    prompt: 线路长度
+    aliases: [线路长度, 路径长度, 新建线路长度, 送出线路长度]
+    type: length
+    extractors: [rule]
+
+  approval_result:
+    name: 批复结论
+    prompt: 批复结论
+    aliases: [批复结论, 审查结论, 原则同意, 同意, 予以批复, 通过评审]
+    type: long_text
+    extractors: [rule]
+
+  attachments:
+    name: 附件
+    prompt: 附件
+    aliases: [附件, 附图, 附表, 附件名称, 附件清单, 随文材料]
+    type: list
+    extractors: [table, rule]
+
+  table_indicators:
+    name: 表格指标
+    prompt: 表格指标
+    aliases: [主要财务指标, 总概算表, 指标]
+    type: table
+    extractors: [table]
+
+  loan_interest_rate:
+    name: 贷款利率
+    prompt: 贷款利率
+    aliases: [贷款利率, 利率, 贷款年利率]
+    type: percent
+    extractors: [rule]
+
+  land_control_area:
+    name: 用地控制指标
+    prompt: 用地控制指标
+    aliases: [用地控制指标, 用地范围, 控制用地规模, 项目用地应控制]
+    type: area
+    extractors: [rule]
+
+  access_investment:
+    name: 接入投资
+    prompt: 接入投资
+    aliases: [接入投资, 接入系统工程总投资, 接入系统方案投资]
+    type: money
+    extractors: [rule]
+
+  access_plan:
+    name: 接入方案
+    prompt: 接入方案
+    aliases: [接入方案, 接入系统方案, 接入系统一次方案]
+    type: long_text
+    extractors: [rule]
+
+  outgoing_circuits:
+    name: 送出回路数
+    prompt: 送出回路数
+    aliases: [送出回路数, 出线回数, 接入回路数]
+    type: count
+    extractors: [rule]
+
+  access_distance:
+    name: 接入距离
+    prompt: 接入距离
+    aliases: [接入距离, 架空线路长度, 电缆线路长度, 新建线路长度]
+    type: length
+    extractors: [rule]
+
+  conductor_section:
+    name: 送出导线截面
+    prompt: 送出导线截面
+    aliases: [导线截面, 架空导线截面, 电缆截面]
+    type: text
+    extractors: [rule]
+
+  access_interval_desc:
+    name: 接入间隔说明
+    prompt: 接入间隔说明
+    aliases: [接入间隔说明, 出线间隔, 扩建间隔]
+    type: text
+    extractors: [rule]
+
+  main_transformer_capacity:
+    name: 主变容量
+    prompt: 主变容量
+    aliases: [主变容量, 主变容量配置]
+    type: capacity
+    extractors: [rule]
+
+  main_transformer_wiring:
+    name: 主变接线方式
+    prompt: 主变接线方式
+    aliases: [主变接线方式, 电气主接线, 接线方式]
+    type: text
+    extractors: [rule]
+
+  svg_capacity:
+    name: SVG容量
+    prompt: SVG容量
+    aliases: [SVG容量, 无功容量, 动态无功补偿容量]
+    type: reactive_power
+    extractors: [rule]

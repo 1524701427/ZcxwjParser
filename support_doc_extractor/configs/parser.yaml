@@ -1,0 +1,29 @@
+parser:
+  primary: opendataloader_pdf
+  scan_fallback: opendataloader_pdf_hybrid
+  text_fallback: pymupdf
+
+quality:
+  min_text_chars_per_page: 80
+  min_total_text_chars: 200
+  max_garbled_ratio: 0.25
+  image_only_page_ratio: 0.6
+
+opendataloader_pdf:
+  format: json
+  reading_order: xycut
+  quiet: true
+  hybrid_backend: null
+  hybrid_mode: full
+  hybrid_url: null
+  hybrid_batch_size: 5
+
+chunking:
+  max_chars: 3000
+  overlap_chars: 300
+  prefer_sections:
+    - first_page
+    - title_area
+    - table_area
+    - signature_area
+    - keyword_context

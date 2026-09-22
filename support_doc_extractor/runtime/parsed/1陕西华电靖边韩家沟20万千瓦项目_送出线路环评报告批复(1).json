@@ -1,0 +1,30 @@
+{
+  "file name" : "1陕西华电靖边韩家沟20万千瓦项目_送出线路环评报告批复(1).pdf",
+  "number of pages" : 3,
+  "author" : "CamScanner",
+  "title" : "送出线路环评报告批复",
+  "creation date" : "D:20240827000539Z00'00'",
+  "modification date" : "D:20240827000539Z00'00'",
+  "kids" : [ {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 7,
+    "page number" : 1,
+    "bounding box" : [ 17.245, 52.0, 577.755, 842.0 ],
+    "source" : "1陕西华电靖边韩家沟20万千瓦项目_送出线路环评报告批复(1)_images/imageFile1.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 9,
+    "page number" : 2,
+    "bounding box" : [ 26.06, 52.0, 568.94, 842.0 ],
+    "source" : "1陕西华电靖边韩家沟20万千瓦项目_送出线路环评报告批复(1)_images/imageFile3.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 11,
+    "page number" : 3,
+    "bounding box" : [ 39.407, 52.0, 555.593, 842.0 ],
+    "source" : "1陕西华电靖边韩家沟20万千瓦项目_送出线路环评报告批复(1)_images/imageFile5.png"
+  } ]
+}

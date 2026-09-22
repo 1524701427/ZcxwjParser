@@ -1,0 +1,91 @@
+document_types:
+  environment_approval:
+    name: 环评批复/意见/报告
+    keywords:
+      filename: [环评, 环境影响, 环境影响报告表]
+      content: [生态环境局, 环保投资, 环境保护投资, 环境影响报告表]
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency
+      - total_investment
+      - environmental_investment
+      - land_control_area
+
+  soil_water_approval:
+    name: 水保批复/意见/报告
+    keywords:
+      filename: [水保, 水土保持]
+      content: [水土保持方案, 水土保持补偿费, 水土保持估算总投资]
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency
+      - soil_water_investment
+      - soil_water_compensation_fee
+
+  grid_access:
+    name: 接入批复
+    keywords:
+      filename: [接入, 电网, 供电公司, 国网]
+      content: [接入系统, 接入电网, 评审意见, 接入方案]
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency
+      - access_investment
+      - access_plan
+      - access_station
+      - outgoing_circuits
+      - access_distance
+      - conductor_section
+      - access_interval_desc
+      - main_transformer_capacity
+      - main_transformer_wiring
+      - svg_capacity
+
+  land_preapproval:
+    name: 用地预审
+    keywords:
+      filename: [用地预审, 选址意见书, 自然资源]
+      content: [建设项目用地预审, 选址意见书, 项目用地应控制在, 总用地面积]
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency
+      - project_name
+      - project_code
+      - construction_unit
+      - project_basis
+      - project_location
+      - land_control_area
+      - construction_scale
+      - attachments
+
+  loan_intent:
+    name: 贷款意向书
+    keywords:
+      filename: [贷款意向, 贷款意向书, 融资意向]
+      content: [贷款意向, 贷款支持, 贷款条件, 利率拟定, 贷款审批方案]
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency
+      - total_investment
+      - loan_interest_rate
+
+  unknown_support_doc:
+    name: 未知支持性文件
+    keywords:
+      filename: []
+      content: []
+    fields:
+      - title
+      - document_no
+      - issue_date
+      - approval_agency

@@ -1,0 +1,23 @@
+{
+  "file name" : "1_送出线路环评报告批复(1).pdf",
+  "number of pages" : 3,
+  "author" : "CamScanner",
+  "title" : "送出线路环评报告批复",
+  "creation date" : "D:20240827000539Z00'00'",
+  "modification date" : "D:20240827000539Z00'00'",
+  "kids" : [ {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 1,
+    "page number" : 3,
+    "bounding box" : [ 39.407, 52.0, 555.593, 842.0 ],
+    "source" : "1_送出线路环评报告批复(1)_images/imageFile1.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 2,
+    "page number" : 3,
+    "bounding box" : [ 476.0, 10.0, 580.0, 40.0 ],
+    "source" : "1_送出线路环评报告批复(1)_images/imageFile2.png"
+  } ]
+}

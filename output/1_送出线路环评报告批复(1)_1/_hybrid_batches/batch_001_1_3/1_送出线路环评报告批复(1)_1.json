@@ -1,0 +1,153 @@
+{
+  "file name" : "1_送出线路环评报告批复(1)_1.pdf",
+  "number of pages" : 3,
+  "author" : "CamScanner",
+  "title" : "送出线路环评报告批复",
+  "creation date" : "D:20240827000539Z00'00'",
+  "modification date" : "D:20240827000539Z00'00'",
+  "kids" : [ {
+    "type" : "heading",
+    "pdfua_tag" : "H1",
+    "id" : 21,
+    "level" : "Doctitle",
+    "page number" : 1,
+    "bounding box" : [ 88.32, 604.763, 513.864, 673.94 ],
+    "heading level" : 1,
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局文件"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 22,
+    "page number" : 1,
+    "bounding box" : [ 198.192, 529.221, 397.653, 543.65 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆政环辐批复［2024］36号"
+  }, {
+    "type" : "heading",
+    "pdfua_tag" : "H1",
+    "id" : 23,
+    "level" : "Subtitle",
+    "page number" : 1,
+    "bounding box" : [ 120.859, 384.502, 480.057, 457.922 ],
+    "heading level" : 1,
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局关于 陕西华电靖边20万千瓦风电项目110kV 送出线路工程环境影响报告表的批复"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 24,
+    "page number" : 1,
+    "bounding box" : [ 108.182, 345.458, 305.107, 359.463 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "陕西华电新能源发电有限公司："
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 25,
+    "page number" : 1,
+    "bounding box" : [ 107.337, 261.427, 494.847, 331.877 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "你公司报送的《陕西华电靖边20万千瓦风电项目110kV 送出线路工程环境影响报告表》及相关资料收悉。结合专家 意见，经审查，现批复如下："
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 26,
+    "page number" : 1,
+    "bounding box" : [ 107.337, 153.207, 494.847, 249.12 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "一、该项目位于榆林市靖边县东坑镇和王渠则镇境内， 新建单回架空线路35.55km,线路起于本项目110kV升压站， 止于曹城 330kV汇集站。项目总投资5127万元，其中环保 投资55万元，占总投资的1.07%。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 27,
+    "page number" : 1,
+    "bounding box" : [ 136.918, 124.772, 495.27, 140.05 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "经审查，该项目在全面落实环境影响报告表提出的各项"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 31,
+    "page number" : 2,
+    "bounding box" : [ 106.914, 691.34, 532.457, 763.487 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "环境保护措施要求后，项目建设对环境的不利影响能够得到 减缓和控制。该项目环境影响报告表所列建设项目的性质、 规模、地点和拟采取的环境保护措施可做为项目实施的依据。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 32,
+    "page number" : 2,
+    "bounding box" : [ 141.989, 658.661, 425.966, 675.213 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "二、项目实施过程中应重点做好以下工作"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 33,
+    "page number" : 2,
+    "bounding box" : [ 108.604, 564.446, 524.428, 639.139 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "（一）项目建设过程中应认真落实各项生态环境保护措 施、严格按照环评文件中的施工方式进行施工，最大限度减 少地表扰动，施工完成后应及时对临时占地进行生态恢复。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 34,
+    "page number" : 2,
+    "bounding box" : [ 108.604, 438.4, 533.725, 543.226 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "（二）运营期间，严格落实环境保护对策措施，确保工 频电场、工频磁场均满足《电磁环境控制限值》(GB8702-2014) 限值要求。定期对线路周围的环境敏感目标进行检测检查， 发现超标等问题，应及时采取相应措施确保环境安全。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 35,
+    "page number" : 2,
+    "bounding box" : [ 108.182, 374.741, 521.893, 422.698 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "（三）项目跨越长城段施工前应取得文物保护主管部门 的同意。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 36,
+    "page number" : 2,
+    "bounding box" : [ 109.027, 261.427, 522.315, 360.311 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "三、项目建设必须严格执行环境保护设施与主体工程同 时设计、同时施工、同时投产使用的环境保护\"三同时\"制 度，落实各项环境保护措施。项目建成后，按规定程序进行 峻工环境保护验收。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 37,
+    "page number" : 2,
+    "bounding box" : [ 109.027, 121.801, 524.006, 251.242 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "四、环境影响报告表经批准后，工程的性质、规模、工 艺、地点或者防治污染、防止生态破坏的措施发生重大变动 的，应当重新报批该项目的环境影响报告表。自环境影响报 告表批复文件批准之日起,如超过 5 年方决定项目开工建设 的，环境影响报告表应当报我局重新审核。"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 41,
+    "page number" : 3,
+    "bounding box" : [ 39.407, 52.0, 555.593, 842.0 ],
+    "source" : "1_送出线路环评报告批复(1)_1_images/imageFile3.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 42,
+    "page number" : 3,
+    "bounding box" : [ 476.0, 10.0, 580.0, 40.0 ],
+    "source" : "1_送出线路环评报告批复(1)_1_images/imageFile4.png"
+  } ]
+}

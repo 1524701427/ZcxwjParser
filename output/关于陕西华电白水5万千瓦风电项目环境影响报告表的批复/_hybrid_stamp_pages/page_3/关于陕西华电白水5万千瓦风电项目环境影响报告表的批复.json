@@ -1,0 +1,78 @@
+{
+  "file name" : "关于陕西华电白水5万千瓦风电项目环境影响报告表的批复.pdf",
+  "number of pages" : 3,
+  "author" : "CamScanner",
+  "title" : "扫描全能王 2025-02-07 11.34",
+  "creation date" : "D:20250207120705+08'00'",
+  "modification date" : "",
+  "kids" : [ {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "page number" : 3,
+    "bounding box" : [ 45.402, 45.0, 549.598, 842.0 ],
+    "source" : "关于陕西华电白水5万千瓦风电项目环境影响报告表的批复_images/imageFile1.png"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 9,
+    "page number" : 3,
+    "bounding box" : [ 70.572, 713.408, 480.902, 758.819 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "护综合执法支队和渭南市生态环境局白水分局,并按规定接受各 级生态环境部门的监督检查。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 10,
+    "page number" : 3,
+    "bounding box" : [ 70.572, 578.875, 480.479, 703.223 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "六、环境影响报告表经批准后，项目的性质、规模、工艺、 地点或者防治污染、防止生态破坏的措施发生重大变动的，应当 重新报批该项目的环境影响报告表。自环境影响报告表批复文件 批准之日起,如超过5年方决定工程开工建设的，环境影响报告 表应当报我局重新审核。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 11,
+    "page number" : 3,
+    "bounding box" : [ 100.153, 548.319, 142.411, 568.69 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "此复。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 13,
+    "page number" : 3,
+    "bounding box" : [ 308.487, 442.644, 408.217, 461.318 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "市生态环境局"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 14,
+    "page number" : 3,
+    "bounding box" : [ 300.036, 421.0, 405.682, 437.127 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "20252年站有用章"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 15,
+    "page number" : 3,
+    "bounding box" : [ 97.617, 152.782, 482.17, 168.06 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "抄送:渭南市生态环境保护综合执法支队,渭南市环境科学研究中心;"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 16,
+    "page number" : 3,
+    "bounding box" : [ 124.663, 134.533, 482.17, 148.538 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "渭南市生态环境局白水分局；陕西科荣环保工程有限责任公司。"
+  } ]
+}

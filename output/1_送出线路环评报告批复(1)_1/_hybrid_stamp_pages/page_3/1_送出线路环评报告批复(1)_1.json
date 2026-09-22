@@ -1,0 +1,96 @@
+{
+  "file name" : "1_送出线路环评报告批复(1)_1.pdf",
+  "number of pages" : 3,
+  "author" : "CamScanner",
+  "title" : "送出线路环评报告批复",
+  "creation date" : "D:20240827000539Z00'00'",
+  "modification date" : "D:20240827000539Z00'00'",
+  "kids" : [ {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 12,
+    "page number" : 3,
+    "bounding box" : [ 80.714, 662.481, 486.818, 763.487 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "五、按照《建设项目环境保护事中事后监督管理办法（试 行)》的要求，靖边分局应负责该项目的事中事后监督管理， 榆林市生态环境保护综合执法支队对事中事后监督管理工 作进行监督和指导。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 13,
+    "page number" : 3,
+    "bounding box" : [ 82.827, 578.875, 485.55, 651.022 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "六、你公司应在接到本批复后 3个工作日内，将批准后 的环境影响报告表送榆林市生态环境局靖边分局备案，并按 规定接受各级生态环境行政主管部门的监督检查。"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 15,
+    "page number" : 3,
+    "bounding box" : [ 346.52, 511.396, 363.846, 523.279 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "市"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 16,
+    "page number" : 3,
+    "bounding box" : [ 306.797, 490.601, 443.292, 513.518 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 17,
+    "page number" : 3,
+    "bounding box" : [ 85.785, 134.533, 411.175, 149.812 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "抄送：市生态环境保护综合执法支队、靖边分局"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 18,
+    "page number" : 3,
+    "bounding box" : [ 85.362, 106.523, 207.912, 123.923 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 19,
+    "page number" : 3,
+    "bounding box" : [ 343.139, 106.948, 487.241, 124.348 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "2024年7月2日印发"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "page number" : 3,
+    "bounding box" : [ 476.0, 10.0, 580.0, 40.0 ],
+    "source" : "1_送出线路环评报告批复(1)_1_images/imageFile1.png"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 21,
+    "page number" : 3,
+    "bounding box" : [ 529.077, 22.917, 579.787, 35.649 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "扫描全能王"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 22,
+    "page number" : 3,
+    "bounding box" : [ 509.638, 10.61, 580.209, 20.371 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "3亿人都在用的扫描App"
+  } ]
+}

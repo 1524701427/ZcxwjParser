@@ -1,0 +1,28 @@
+pipeline:
+  order:
+    - typed
+    - common
+    - table
+    - rule
+
+extractors:
+  typed:
+    enabled: true
+    field_select: all
+  common:
+    enabled: true
+    field_select: all
+  table:
+    enabled: true
+    field_select: by_field_config
+    field_tags: [table]
+  rule:
+    enabled: true
+    field_select: by_field_config
+    field_tags: [rule]
+
+candidate_priorities:
+  typed: 0.12
+  table: 0.08
+  rule: 0.06
+  common: 0.04

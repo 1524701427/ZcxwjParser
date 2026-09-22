@@ -1,0 +1,49 @@
+{
+  "title": {
+    "name": "title",
+    "page_number": 1,
+    "text": "关于 陕西华电靖边20万千瓦风电项目110kV 送出线路工程环境影响报告表的批复",
+    "bbox": [
+      198.192,
+      529.221,
+      397.653,
+      543.65
+    ],
+    "region_bbox": [
+      198.192,
+      529.221,
+      397.653,
+      543.65
+    ],
+    "source_ids": [
+      2
+    ],
+    "source_types": [
+      "paragraph"
+    ]
+  },
+  "issuer_from_stamp": {
+    "name": "issuer",
+    "text": "榆林市生态环境局",
+    "source": "stamp_nearby_hybrid",
+    "confidence": 1.281,
+    "page_number": 3,
+    "bbox": [
+      306.797,
+      490.601,
+      443.292,
+      513.518
+    ],
+    "source_id": 16,
+    "source_type": "paragraph",
+    "stamp_bbox": [
+      335.5,
+      288.5,
+      445.5,
+      397.5
+    ],
+    "stamp_page_number": 3,
+    "stamp_search_mode": "hybrid"
+  },
+  "competitive_scoring_tables": []
+}

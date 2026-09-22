@@ -1,0 +1,88 @@
+{
+  "file name" : "榆林市生态环境局关于陕西华电靖边韩家沟20万千瓦风电项目环境影响报告表的批复.PDF(1).pdf",
+  "number of pages" : 4,
+  "author" : null,
+  "title" : null,
+  "creation date" : "D:20240108104444Z",
+  "modification date" : "D:20240108104444Z",
+  "kids" : [ {
+    "type" : "heading",
+    "pdfua_tag" : "H1",
+    "id" : 7,
+    "level" : "Doctitle",
+    "page number" : 1,
+    "bounding box" : [ 74.375, 609.979, 523.16, 679.074 ],
+    "heading level" : 1,
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局文件"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 8,
+    "page number" : 1,
+    "bounding box" : [ 203.686, 523.506, 388.356, 538.766 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆政环批复［2024]2号"
+  }, {
+    "type" : "heading",
+    "pdfua_tag" : "H1",
+    "id" : 9,
+    "level" : "Subtitle",
+    "page number" : 1,
+    "bounding box" : [ 129.311, 367.938, 465.266, 446.357 ],
+    "heading level" : 1,
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "榆林市生态环境局关于 陕西华电靖边韩家沟20万千瓦风电 项目环境影响报告表的批复"
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 10,
+    "page number" : 1,
+    "bounding box" : [ 92.546, 308.593, 302.148, 322.581 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "陕西华电新能源发电有限公司："
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 11,
+    "page number" : 1,
+    "bounding box" : [ 91.278, 186.936, 503.722, 292.909 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "你公司报送的《陕西华电靖边韩家沟20万千瓦风电项 目环境影响报告表》及相关资料已收悉，结合榆林市环境工 程评估中心技术评估报告（榆环评估环发〔2023］85号）, 经研究，批复如下："
+  }, {
+    "type" : "paragraph",
+    "pdfua_tag" : "P",
+    "id" : 12,
+    "page number" : 1,
+    "bounding box" : [ 92.124, 128.015, 510.483, 173.371 ],
+    "font" : null,
+    "font size" : 12.0,
+    "content" : "一、项目位于陕西省榆林市靖边县王渠则镇南部韩家沟， 建设内容包括风机、箱变、集电线路、道路工程及升压站（升"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 13,
+    "page number" : 2,
+    "bounding box" : [ 0.0, 0.0, 595.0, 841.0 ],
+    "source" : "榆林市生态环境局关于陕西华电靖边韩家沟20万千瓦风电项目环境影响报告表的批复.PDF(1)_images/imageFile1.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 14,
+    "page number" : 3,
+    "bounding box" : [ 0.0, 0.0, 595.0, 841.0 ],
+    "source" : "榆林市生态环境局关于陕西华电靖边韩家沟20万千瓦风电项目环境影响报告表的批复.PDF(1)_images/imageFile2.png"
+  }, {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 15,
+    "page number" : 4,
+    "bounding box" : [ 0.0, 0.0, 595.0, 841.0 ],
+    "source" : "榆林市生态环境局关于陕西华电靖边韩家沟20万千瓦风电项目环境影响报告表的批复.PDF(1)_images/imageFile3.png"
+  } ]
+}
