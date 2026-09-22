@@ -1,3 +1,5 @@
+"""字段值标准化与结果校验。"""
+
 from __future__ import annotations
 
 import re
@@ -8,7 +10,7 @@ from support_doc_extractor.models import Document, ExtractedField
 # ==== 字段标准化 ====
 
 def normalize_field(field: ExtractedField) -> ExtractedField:
-    """Attach normalized value metadata for supported field types."""
+    """根据字段类型附加标准化结果。\n\n    Args:\n        field: 原始字段候选。\n\n    Returns:\n        已填充 normalized 的字段候选。\n    """
     text = str(field.value or "").strip()
     if not text:
         return field
