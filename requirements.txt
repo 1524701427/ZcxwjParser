@@ -1,6 +1,6 @@
 opendataloader-pdf>=2.0.0
-pdfplumber>=0.11.0
-paddleocr>=2.7.0
 pymupdf>=1.24.0
-pillow>=10.0.0
+pyyaml>=6.0.0
 numpy>=1.24.0
+rapidocr>=3.0.0
+pillow>=10.0.0
