@@ -160,3 +160,32 @@ print(output["details_path"])   # 支持性文件/示例_details.json
 4. 版式固定字段在 `src/support_doc_extractor/engine.py` 的类型抽取逻辑里增加处理。
 
 OpenDataLoader 解析缓存放在 `runtime/parsed/`，按源文件路径、大小和修改时间隔离；业务 JSON 结果默认写在输入文件旁边。`runtime/` 可以删除后重新生成。
+
+
+## Java FileContent 映射
+
+简洁结果文件（`*.json`）直接输出 Java `FileContent` 字段名，详细抽取证据仍保留在 `*_details.json`。
+
+| Java 字段 | 内部字段 |
+| --- | --- |
+| fileType | doc_type（映射为中文文件类型） |
+| approvalUnit | approval_agency |
+| dispatchNo | document_no |
+| obtainDate | issue_date |
+| loanRate | loan_interest_rate |
+| landControl | land_control，缺失时回退 land_control_area |
+| waterConservationInvestment | soil_water_investment |
+| soilWaterConservationFee | soil_water_compensation_fee |
+| environmentalProtectionInvestment | environmental_investment |
+| accessScheme | access_plan |
+| accessStationName | access_station |
+| accessLocation | access_location |
+| outletCircuitCount | outgoing_circuits |
+| accessDistance | access_distance |
+| outletConductorSection | conductor_section |
+| accessIntervalDescription | access_interval_desc |
+| mainTransformerCapacity | main_transformer_capacity |
+| mainTransformerWiringMode | main_transformer_wiring |
+| svgCapacity | svg_capacity |
+
+`recognizeDate` 由程序生成当前识别时间，`remark` 默认输出 `null`。未识别到的业务字段也固定输出 `null`，保证 Java 反序列化结构稳定。
