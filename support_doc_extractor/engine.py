@@ -26,6 +26,8 @@ from support_doc_extractor.logging_utils import get_logger
 
 logger = get_logger("engine")
 
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
+
 # ==== 文档类型处理 ====
 
 class RuleClassifier:
@@ -919,7 +921,10 @@ def extract_main_transformer_capacity(text: str) -> tuple[str | None, str | None
 
 def extract_main_transformer_wiring(text: str) -> tuple[str | None, str | None, dict]:
     section = section_window(text, "\u539f\u5219\u7535\u6c14\u4e3b\u63a5\u7ebf", 500)
-    value, evidence, meta = first_match(section or text, [r"110\s*\u5343\u4f0f[^\u3002\uff1b;]{0,40}?\u91c7\u7528([\u4e00-\u9fa5]{2,12})(?:\u63a5\u7ebf)?"])
+    value, evidence, meta = first_match(
+        section or text,
+        [r"(?:110|220)\s*(?:\u5343\u4f0f|kV)[^\u3002\uff1b;]{0,40}?\u91c7\u7528([\u4e00-\u9fa5]{2,12})(?:\u63a5\u7ebf)?"],
+    )
     return (value.replace("\u63a5\u7ebf", ""), evidence, meta) if value else (None, None, {})
 
 
@@ -1260,7 +1265,9 @@ class SupportDocPipeline:
         """
         logger.info("parse_start file=%s parser=%s", path, self.parser_name)
         started_at = time.perf_counter()
-        if self.parser_name == "opendataloader_pdf":
+        if path.suffix.lower() in IMAGE_SUFFIXES:
+            document = self._parse_image(path)
+        elif self.parser_name == "opendataloader_pdf":
             parser_config = load_config(config_path("parser.yaml"))
             options = parser_config.get("opendataloader_pdf", {})
             if self.refresh_parsed:
@@ -1281,7 +1288,11 @@ class SupportDocPipeline:
                 document.meta["parser_error"] = f"{type(exc).__name__}: {exc}"
         else:
             document = PyMuPDFParser().parse(path)
-        if self.auto_ocr and needs_ocr(document, min_text_chars=self.min_text_chars):
+        if (
+            self.auto_ocr
+            and path.suffix.lower() not in IMAGE_SUFFIXES
+            and needs_ocr(document, min_text_chars=self.min_text_chars)
+        ):
             document.meta["needs_ocr"] = True
             document.meta["ocr_reason"] = ocr_reason(document, min_text_chars=self.min_text_chars)
             logger.info(
@@ -1319,6 +1330,24 @@ class SupportDocPipeline:
             len(document.full_text or ""),
             int((time.perf_counter() - started_at) * 1000),
         )
+        return document
+
+    def _parse_image(self, path: Path) -> Document:
+        """OCR a directly uploaded image into the common document model."""
+        try:
+            from PIL import Image
+        except ImportError as exc:
+            raise RuntimeError("图片解析需要安装 pillow。") from exc
+
+        engine = _rapidocr_engine()
+        text = _ocr_image(engine, path, min_score=0.45, max_side=max(self.ocr_page_max_side, 1800))
+        with Image.open(path) as image:
+            width, height = image.size
+        blocks = [Block(text=text, type="image_ocr", page_no=1, meta={"source": str(path)})] if text else []
+        page = Page(page_no=1, width=float(width), height=float(height), blocks=blocks, text=text)
+        document = Document(file=path, pages=[page], parser="rapidocr")
+        document.meta["direct_image_ocr"] = True
+        document.rebuild_text()
         return document
 
     def _parse_with_hybrid(self, path: Path) -> Document:

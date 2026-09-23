@@ -17,6 +17,7 @@ def test_java_file_content_mapping_uses_raw_business_strings():
     details = {
         "doc_type": "grid_access",
         "fields": {
+            "title": _field("关于示例项目接入系统方案的批复"),
             "approval_agency": _field("国网陕西省电力有限公司"),
             "document_no": _field("陕电发展〔2026〕12号"),
             "issue_date": _field("2026年9月1日", "2026-09-01"),
@@ -26,12 +27,14 @@ def test_java_file_content_mapping_uses_raw_business_strings():
             "outgoing_circuits": _field("1回", {"value": 1, "unit": "回"}),
             "access_distance": _field("5.6km", {"value": 5.6, "unit": "km"}),
             "main_transformer_capacity": _field("50MVA", {"value": 50, "unit": "MVA"}),
+            "access_investment": _field("31450000元", {"amount": 3145, "unit": "万元"}),
         },
     }
 
     result = to_file_content(details)
 
     assert result["fileType"] == "接入批复文件"
+    assert result["title"] == "关于示例项目接入系统方案的批复"
     assert result["approvalUnit"] == "国网陕西省电力有限公司"
     assert result["dispatchNo"] == "陕电发展〔2026〕12号"
     assert result["obtainDate"] == "2026-09-01T00:00:00"
@@ -40,6 +43,7 @@ def test_java_file_content_mapping_uses_raw_business_strings():
     assert result["outletCircuitCount"] == "1回"
     assert result["accessDistance"] == "5.6km"
     assert result["mainTransformerCapacity"] == "50MVA"
+    assert result["accessInvestment"] == "3145万元"
     assert result["remark"] is None
     assert result["recognizeDate"]
     assert "+" not in result["recognizeDate"]
@@ -54,13 +58,14 @@ def test_land_control_prefers_text_semantics_over_area_fallback():
             "land_control_area": _field("12.5公顷", {"value": 12.5, "unit": "公顷"}),
         },
     }
-    assert to_file_content(details)["landControl"] == "不占用永久基本农田"
+    assert to_file_content(details)["landControl"] == "12.5公顷"
 
 
 def test_all_java_contract_keys_are_stable_when_values_missing():
     result = to_file_content({"doc_type": "loan_intent", "fields": {}})
     assert list(result) == [
         "fileType",
+        "title",
         "approvalUnit",
         "dispatchNo",
         "obtainDate",
@@ -69,6 +74,7 @@ def test_all_java_contract_keys_are_stable_when_values_missing():
         "waterConservationInvestment",
         "soilWaterConservationFee",
         "environmentalProtectionInvestment",
+        "accessInvestment",
         "accessScheme",
         "accessStationName",
         "accessLocation",

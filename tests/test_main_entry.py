@@ -43,7 +43,7 @@ def test_parse_api_returns_file_content(monkeypatch):
     assert body["environmentalProtectionInvestment"] == "500万元"
 
 
-def test_parse_api_rejects_non_pdf():
+def test_parse_api_rejects_unsupported_file():
     response = client.post(
         "/api/parse",
         data={"file_type": "水保"},
@@ -51,4 +51,24 @@ def test_parse_api_rejects_non_pdf():
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "当前仅支持 PDF 文件。"
+    assert response.json()["detail"] == "当前仅支持 PDF、PNG、JPG、TIFF、BMP 文件。"
+
+
+def test_parse_api_accepts_image(monkeypatch):
+    def fake_extract_document(doc_type, file_path, *, parsed_root=None, write_files=True):
+        assert file_path.suffix == ".png"
+        return {
+            "result_path": None,
+            "details_path": None,
+            "result": {"fileType": "水保批复文件", "recognizeDate": "2026-09-23T10:00:00"},
+            "details": {},
+        }
+
+    monkeypatch.setattr(main, "extract_document", fake_extract_document)
+    response = client.post(
+        "/api/parse",
+        data={"file_type": "水保"},
+        files={"file": ("scan.png", BytesIO(b"image"), "image/png")},
+    )
+    assert response.status_code == 200
+    assert response.json()["fileType"] == "水保批复文件"

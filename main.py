@@ -57,6 +57,7 @@ class FileContentResponse(BaseModel):
     """Java FileContent 对应的接口返回模型。"""
 
     fileType: str | None = None
+    title: str | None = None
     approvalUnit: str | None = None
     dispatchNo: str | None = None
     obtainDate: str | None = None
@@ -65,6 +66,7 @@ class FileContentResponse(BaseModel):
     waterConservationInvestment: str | None = None
     soilWaterConservationFee: str | None = None
     environmentalProtectionInvestment: str | None = None
+    accessInvestment: str | None = None
     accessScheme: str | None = None
     accessStationName: str | None = None
     accessLocation: str | None = None
@@ -85,13 +87,13 @@ class FileContentResponse(BaseModel):
     summary="解析支持性文件",
 )
 async def parse_support_document(
-    file: UploadFile = File(..., description="待解析的单个 PDF 文件"),
+    file: UploadFile = File(..., description="待解析的单个 PDF 或图片文件"),
     file_type: ApiFileType = Form(..., description="文件类型"),
 ) -> FileContentResponse:
-    """解析上传的单个支持性 PDF 文件。
+    """解析上传的单个支持性 PDF 或图片文件。
 
     Args:
-        file: 上传的 PDF 文件。
+        file: 上传的 PDF 或图片文件。
         file_type: 文件类型枚举，可选贷款意向、用地预审、水保、环评、接入。
 
     Returns:
@@ -101,8 +103,9 @@ async def parse_support_document(
         HTTPException: 文件类型、文件扩展名或解析过程存在异常。
     """
     filename = Path(file.filename or "upload.pdf").name
-    if Path(filename).suffix.lower() != ".pdf":
-        raise HTTPException(status_code=400, detail="当前仅支持 PDF 文件。")
+    supported_suffixes = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
+    if Path(filename).suffix.lower() not in supported_suffixes:
+        raise HTTPException(status_code=400, detail="当前仅支持 PDF、PNG、JPG、TIFF、BMP 文件。")
 
     try:
         with tempfile.TemporaryDirectory(prefix="support_doc_api_") as temp_dir:

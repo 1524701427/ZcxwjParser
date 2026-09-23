@@ -33,7 +33,7 @@ Content-Type: multipart/form-data
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| file | File | 单个 PDF 文件 |
+| file | File | 单个 PDF 或图片文件（PNG/JPG/TIFF/BMP） |
 | file_type | Enum | 贷款意向 / 用地预审 / 水保 / 环评 / 接入 |
 
 接口执行完成后直接返回与 Java `FileContent` 对应的 JSON，不返回临时文件路径。
@@ -43,6 +43,7 @@ Content-Type: multipart/form-data
 ```json
 {
   "fileType": "环保批复文件",
+  "title": "关于示例项目环境影响报告表的批复",
   "approvalUnit": "榆林市生态环境局",
   "dispatchNo": "榆环批复〔2026〕1号",
   "obtainDate": "2026-09-01T00:00:00",
@@ -51,6 +52,7 @@ Content-Type: multipart/form-data
   "waterConservationInvestment": null,
   "soilWaterConservationFee": null,
   "environmentalProtectionInvestment": "500万元",
+  "accessInvestment": null,
   "accessScheme": null,
   "accessStationName": null,
   "accessLocation": null,
